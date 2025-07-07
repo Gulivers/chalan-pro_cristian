@@ -5,7 +5,7 @@ from .utils import logo_upload_path
 from PIL import Image
 
 class Identity(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='identity')
+    # user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='identity')
     name = models.CharField(max_length=255)
     logo = models.ImageField(upload_to=logo_upload_path, default="tenant_logos/default_logo.jpg")
     last_update = models.DateTimeField(auto_now=True)
@@ -13,6 +13,15 @@ class Identity(models.Model):
     def __str__(self):
         return self.name
     
+    def delete(self, *args, **kwargs):
+        # Si hay logo y el archivo existe en disco, lo eliminamos
+        if self.logo and os.path.isfile(self.logo.path) and self.logo.path != "/app/media/tenant_logos/default_logo.jpg":
+            try:    
+                os.remove(self.logo.path)
+            except FileNotFoundError:
+                pass
+        super().delete(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         old_logo_path = None
 
