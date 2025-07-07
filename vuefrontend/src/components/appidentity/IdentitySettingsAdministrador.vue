@@ -41,15 +41,14 @@
           <table class="table table-striped table-hover mb-0">
             <thead class="table-light">
               <tr>
-                <th>User</th>
                 <th>Name Company</th>
                 <th>Logo</th>
+                <th>Last Update</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="identity in identities" :key="identity.id">
-                <td>{{ identity.username }}</td>
                 <td>{{ identity.name }}</td>
                 <td>
                   <img
@@ -60,6 +59,7 @@
                     style="max-width: 100px; height: auto; aspect-ratio: 3/2; object-fit: contain;"
                   />
                 </td>
+                <td>{{ formtFecha(identity.last_update) }}</td>
                 <td>
                   <button class="btn btn-sm btn-outline-secondary me-2" @click="view(identity)">
                     View
@@ -121,33 +121,6 @@
 
           <div class="modal-body">
             <form @submit.prevent="saveIdentity">
-              <div class="mb-3" v-if="isCreateMode">
-                <label class="form-label">User</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  v-model="userQuery"
-                  @input="onUserSearch"
-                  @focus="userDropdownVisible = true"
-                  @blur="hideDropdownWithDelay"
-                  placeholder="Buscar usuario..."
-                  required
-                />
-                <ul
-                  class="list-group position-absolute w-100 shadow"
-                  v-show="userDropdownVisible && userOptions.length"
-                  style="z-index: 1000; max-height: 200px; overflow-y: auto;"
-                >
-                  <li
-                    class="list-group-item list-group-item-action"
-                    v-for="user in userOptions"
-                    :key="user.id"
-                    @mousedown.prevent="selectUser(user)"
-                  >
-                    <strong>{{ user.username }}</strong>
-                  </li>
-                </ul>
-              </div>
               <div class="mb-3">
                 <label class="form-label">Name Company</label>
                 <input v-model="form.name" type="text" class="form-control" required />
@@ -211,18 +184,15 @@ export default {
       loading: false,
       form: {
         id: null,
-        user_id: null,
-        username: '',
         name: '',
         logo: null,
+        last_update: null,
       },
       user_id: null,
       currentPage: 1,
       totalPages: 1,
       pageSizeOptions: [5, 10, 20],
       pageSize: 10,
-      userQuery: '',
-      userOptions: [],
       searchTerm: '',
       Message: '',
       typeMessage : '',
@@ -238,6 +208,11 @@ export default {
     this.fetchIdentities();
   },
   methods: {
+    formtFecha(date) {
+      if (!date) return '';
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      return new Date(date).toLocaleDateString('en-US', options);
+    },
     putMessage(type, message) {
       this.typeMessage = type;
       this.Message = message;
@@ -264,25 +239,6 @@ export default {
         .finally(() => {
           this.loading = false;
         });
-    },
-    onUserSearch() {
-      if (this.userQuery.length < 1) {
-        this.userOptions = [];
-        return;
-      }
-      axios.get(`/api/users/?search=${this.userQuery}`).then((res) => {
-        this.userOptions = res.data.results;
-      });
-    },
-    selectUser(user) {
-      this.userQuery = `${user.username}`;
-      this.user_id = user.id;
-      this.userDropdownVisible = false;
-    },
-    hideDropdownWithDelay() {
-      setTimeout(() => {
-        this.userDropdownVisible = false;
-      }, 200); 
     },
     onFileChange(e) {
       this.form.logo = e.target.files[0];
@@ -362,7 +318,6 @@ export default {
         id: identity.id,
         name: identity.name,
         logo: identity.logo, 
-        username: identity.username, 
       };
     },
     edit(identity) {
@@ -371,7 +326,6 @@ export default {
         id: identity.id,
         name: identity.name,
         logo: null,
-        username: identity.username,
       };
     },
     deleteIdentity(id) {
@@ -387,11 +341,7 @@ export default {
         id: null,
         name: '',
         logo: null,
-        username: '', 
       };
-      this.userQuery = '';
-      this.userOptions = [];
-      this.user_id = null;
     },
     openCreateModal() {
       this.isCreateMode = true;

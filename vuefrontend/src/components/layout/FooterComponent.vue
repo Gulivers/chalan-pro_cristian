@@ -13,7 +13,7 @@
           <router-link class="footer-link" to="/">Dashboard</router-link> |
           <router-link class="footer-link" to="/contracts">Contracts</router-link> |
           <router-link class="footer-link" to="/work-prices">Work Prices</router-link> |
-          <router-link class="footer-link" to="/settings">Settings</router-link>  |
+          <router-link class="footer-link" to="/settings-administrador">Companies</router-link>  |
           <router-link class="footer-link" to="/about">About</router-link>
         </div>
         <div class="col-md-4 mb-2" v-if="$route.meta.hideNavbar">

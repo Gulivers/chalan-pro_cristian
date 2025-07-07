@@ -79,14 +79,15 @@ export default {
             { text: 'Supervisor Communities', route: '/supervisor-communities' }
           ]
         },
-        { 
-          text: 'Settings',
-          isOpen: false, 
-          children: [
-            { text: 'Me', route: '/settings' }, // This should match the route for IdentitySettings
-            { text: 'Administrador', route: '/settings-administrador' },
-          ]
-          },
+        // { 
+        //   text: 'Settings',
+        //   isOpen: false, 
+        //   children: [
+        //     { text: 'Me', route: '/settings' }, // This should match the route for IdentitySettings
+        //     { text: 'Administrador', route: '/settings-administrador' },
+        //   ]
+        //   },
+        { text: 'Companies', route: '/settings-administrador' },
         { text: 'About', route: '/about' },
       ],
       userName: ''

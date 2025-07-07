@@ -143,12 +143,12 @@ const routes = [
     component: ScheduleHouseChatsGeneralComponent,
     meta: { requiresAuth: true, requiredPermissions: ['appschedule.view_event'] }
   },
-  {
-    path: '/settings',
-    name: 'identity-settings',
-    component: IdentitySettings,
-    meta: { requiresAuth: true }  
-  },
+  // {
+  //   path: '/settings',
+  //   name: 'identity-settings',
+  //   component: IdentitySettings,
+  //   meta: { requiresAuth: true }  
+  // },
   {
     path: '/settings-administrador',
     name: 'settings-administrador',
