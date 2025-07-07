@@ -368,24 +368,14 @@ def download_schedule_pdf(request):
 
     domain = request.get_host()
     
-    # if 'phoenixelectricandair' in domain:
-    #     tenant_logo = 'media/tenant_logos/Logo-phoenix-w.png'
-    # elif '192.168.0.248:8000' in domain or 'division16llc' in domain:
-    #     tenant_logo = 'media/tenant_logos/Logo-division-w.png'
-    # else:
-    #     tenant_logo = 'media/tenant_logos/default-logo.png'
-    #     if identity and identity.logo:
-    #         tenant_logo = identity.logo.path 
-
-    # Obtener el logo personalizado del usuario si existe
-    identity = Identity.objects.filter(user=request.user).first()
-    
-    if identity and identity.logo:
-        logo_identity = identity.logo.url
+    if 'phoenixelectricandair' in domain:
+        tenant_logo = 'media/tenant_logos/Logo-phoenix-w.png'
+    elif '192.168.0.248:8000' in domain or 'division16llc' in domain:
+        tenant_logo = 'media/tenant_logos/Logo-division-w.png'
     else:
-       logo_identity = '/media/tenant_logos/default-logo.png'
+        tenant_logo = 'media/tenant_logos/default-logo.png'
 
-    logo_url = request.build_absolute_uri(logo_identity)
+    logo_url = request.build_absolute_uri(tenant_logo)
 
     context = {
         'categorized_events': categorized_events_clean,

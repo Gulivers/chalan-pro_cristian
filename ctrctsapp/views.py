@@ -582,15 +582,16 @@ def download_contract_pdf(request, contract_id):
         left_details = details[:mid_index]
         right_details = details[mid_index:]
 
-        # Obtener el logo personalizado del usuario si existe
-        identity = Identity.objects.filter(user=request.user).first()
+        domain = request.get_host()
         
-        if identity and identity.logo:
-            logo_identity = identity.logo.url
+        if 'phoenixelectricandair' in domain:
+            tenant_logo = 'media/tenant_logos/Logo-phoenix-w.png'
+        elif '192.168.0.248:8000' in domain or 'division16llc' in domain:
+            tenant_logo = 'media/tenant_logos/Logo-division-w.png'
         else:
-            logo_identity = '/media/tenant_logos/default-logo.png'
+            tenant_logo = 'media/tenant_logos/default-logo.png'
 
-        logo_url = request.build_absolute_uri(logo_identity)
+        logo_url = request.build_absolute_uri(tenant_logo)
 
         # Prepare the data to return
         context = {
