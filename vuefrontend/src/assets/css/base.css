@@ -1,0 +1,45 @@
+/* ACTION ICONS */
+
+.viewlink, .inlineviewlink {
+    padding-left: 25px;
+    background: url(../img/icon-viewlink.svg) 0 1px no-repeat;
+    background-size: 19px 19px;
+}
+
+.addlink {
+    padding-left: 25px;
+    background: url(../img/icon-addlink.svg) 0 1px no-repeat;
+}
+
+.changelink, .inlinechangelink {
+    padding-left: 25px;
+    background: url(../img/icon-changelink.svg) 0 1px no-repeat;
+}
+
+.deletelink {
+    padding-left: 25px;
+    background: url(../img/icon-deletelink.svg) 0 1px no-repeat;
+}
+
+a.deletelink:link, a.deletelink:visited {
+    color: #CC3434;
+}
+
+a.deletelink:focus, a.deletelink:hover {
+    color: #993333;
+    text-decoration: none;
+}
+
+/* para que el evento con nuevo mensaje suba y brille en el listado*/
+.highlight-event {
+    animation: flash-highlight 1s ease-in-out;
+  }
+  
+  @keyframes flash-highlight {
+    0% {
+      background-color: #fff3cd; /* Amarillo claro como alerta */
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
