@@ -21,6 +21,7 @@ __pycache__/
 
 # Ignore .env files
 .env
+.env_mysql
 
 .idea/
 
