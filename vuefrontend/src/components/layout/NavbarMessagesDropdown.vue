@@ -36,9 +36,7 @@ export default {
 
         if (!userId.value) throw new Error('User ID not found.')
 
-        ws.value = new WebSocket(
-          `${import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000'}/ws/schedule/unread/user/${userId.value}/`
-        )
+        ws.value = new WebSocket(`${process.env.VUE_APP_WS_BASE_URL}ws/schedule/unread/user/${userId.value}/`)
 
         ws.value.onopen = () => console.log('[WS] Connected to unread chat count.')
 

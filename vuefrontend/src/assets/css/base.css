@@ -43,3 +43,97 @@ a.deletelink:focus, a.deletelink:hover {
       background-color: transparent;
     }
   }
+
+/* Custom Placeholder Styles */
+.form-control::placeholder,
+.form-select::placeholder {
+    color: #6c757d !important;
+    opacity: 0.7;
+    font-style: italic;
+}
+
+/* Custom Tooltip Styles */
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 250px;
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    text-align: center;
+    border-radius: 8px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -125px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.custom-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #6f42c1 transparent transparent transparent;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Question mark icon styles */
+.fa-question-circle {
+    color: #6f42c1;
+    font-size: 0.9rem;
+    cursor: help;
+    transition: color 0.2s ease-in-out;
+}
+
+.fa-question-circle:hover {
+    color: #5a32a3;
+}
+
+/* Ensure tooltip icons are visible in form labels */
+.form-label .fa-question-circle,
+.form-check-label .fa-question-circle {
+    display: inline-block;
+    margin-left: 0.25rem;
+    vertical-align: middle;
+}
+
+/* Switch Checkbox Styles */
+.form-switch {
+    padding-left: 2.5em;
+}
+
+.form-switch .form-check-input {
+    width: 2em;
+    height: 1em;
+    margin-left: -2.5em;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.25%29'/%3e%3c/svg%3e");
+    background-position: left center;
+    border-radius: 2em;
+    transition: background-position .15s ease-in-out;
+}
+
+.form-switch .form-check-input:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%230d6efd'/%3e%3c/svg%3e");
+}
+
+.form-switch .form-check-input:checked {
+    background-position: right center;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}

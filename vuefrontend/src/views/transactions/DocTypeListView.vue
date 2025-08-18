@@ -1,8 +1,8 @@
 <template>
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3>Type Documents</h3>
-      <router-link to="/document-types/form" class="btn btn-success">+ New Document Type</router-link>
+      <h3>Type Transactions</h3>
+      <router-link to="/document-types/form" class="btn btn-success">+ New Transaction Type</router-link>
     </div>
 
     <div class="mb-3 row">
