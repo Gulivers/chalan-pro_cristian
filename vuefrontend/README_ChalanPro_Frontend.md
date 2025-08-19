@@ -18,15 +18,18 @@ src/
 │   ├── layout/              # Navbar, Footer, Sidebar
 │   ├── contracts/           # Formulario, charts, modales de contrato
 │   ├── houses/              # Vista de mapa, notas, etc.
-│   └── schedule/            # Calendario, chats, discusiones
+│   ├── schedule/            # Calendario, chats, discusiones
+│   ├── inventory/           # Componentes de inventario, productos, precios
+│   ├── transactions/        # Formularios de transacciones, party types, document types
+│   └── buttons/             # Botones reutilizables del sistema
 │
-├── views/                   # Vistas principales del sistema (Login, Home, 
-|    │   AboutView.vue
-|    │   HomeView.vue
-|    │   LoginView.vue
-│    └── contract/            # Subvistas de contratos (WorkPrices, etc.)
-|           ContractView.vue
-|           WorkPricesView.vue
+├── views/                   # Vistas principales del sistema (Login, Home, etc.)
+│    │   AboutView.vue
+│    │   HomeView.vue
+│    │   LoginView.vue
+│    ├── contract/            # Subvistas de contratos (WorkPrices, etc.)
+│    ├── inventory/           # Vistas de inventario (productos, categorías, etc.)
+│    └── transactions/        # Vistas de transacciones y party types
 │
 ├── auth/                    # Servicios y lógica de autenticación (login, tokens)
 ├── router/                  # Configuración de rutas Vue Router
@@ -81,6 +84,100 @@ src/
 - [Axios](https://axios-http.com/)
 
 ---
+
+# 🏗️ Patrón CRUD en el Sistema
+
+Este patrón aplica a **todos los CRUD** del sistema:
+
+- **Forms**: Bootstrap puro (sin `bootstrap-vue-next`).  
+  ➡️ Éxito silencioso + redirección inmediata.  
+- **Listas**: `bootstrap-vue-next` (`b-table`) para search/paginación client-side y acciones (view/edit/delete).  
+- **Auth/axios**: No setear headers manualmente; la Pinia store de auth ya los inyecta.
+
+---
+
+## 📄 Formularios (Bootstrap only)
+
+### 🔹 Estructura base (`script setup`)
+- `id = route.query.id`
+- `isViewMode = route.query.mode === 'view'`
+- `isEditMode = !!id && !isViewMode`
+- **onMounted**: si hay `id`, `GET /api/<resource>/:id/` y `form.value = data`
+
+### 🔹 `handleSubmit`
+- Trim + validación mínima (requeridos y longitudes).
+- `POST /api/<resource>/` en **create**.
+- `PUT /api/<resource>/:id/` en **edit**.
+- ❌ Sin toasts ni alerts en éxito → **redirigir de una por nombre de ruta**.
+- ✅ `SweetAlert` solo para errores (400/403/etc.).
+
+### 🔹 UI
+- Inputs `form-control` y `form-switch` de Bootstrap.
+- Botones `btn-outline` (primary, secondary).
+- **Modo view**: deshabilita todos los campos y oculta el botón **Save**.
+
+Botón Save obligatorio:
+```vue
+<i v-else class="fas fa-save me-1"></i>
+{{ submitting ? 'Saving...' : 'Save' }}
+
+Redirección recomendada:
+
+router.push({ name: 'party-types' }).catch(() => router.push('/party-types'))
+
+📋 Listas (bootstrap-vue-next)
+
+b-table con columns mínimas + actions (view/edit/delete).
+
+Search client-side (b-form-input).
+
+Entries per page (10, 25, 50, 100).
+
+b-pagination.
+
+🔹 Acciones
+
+Create →
+
+router.push({ name: 'party-types-form', query: { mode: 'create' }})
+
+
+View →
+
+router.push({ name: 'party-types-form', query: { mode: 'view', id }})
+
+
+Edit →
+
+router.push({ name: 'party-types-form', query: { mode: 'edit', id }})
+
+
+Delete → con confirm de SweetAlert, luego fetch().
+
+🧭 Rutas (patrón recomendado)
+
+Dos rutas son suficientes:
+
+// Lista
+{ path: '/party-types', name: 'party-types', component: PartyTypeListView, meta: { requiresAuth: true } },
+
+// Form multi-modo por query (?mode=view|edit|create&id=)
+{ path: '/party-types/form', name: 'party-types-form', component: PartyTypeForm, meta: { requiresAuth: true } },
+
+
+El form detecta el modo por query.
+Si prefieres rutas separadas, asegúrate de mantener la misma lógica interna (trim, view mode, redirect por nombre).
+
+🧩 Últimas 3 mejoras aplicadas a PartyTypeForm.vue
+
+Trim antes de enviar.
+
+Validación de longitud mínima.
+
+Validación de requeridos antes del submit.
+
+---
+
 
 ## 🛠️ En resumen
 > Código limpio, modular

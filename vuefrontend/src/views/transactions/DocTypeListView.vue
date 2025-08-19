@@ -70,10 +70,12 @@
 
       <template #cell(actions)="data">
         <td class="text-center">
+          <div class="btn-group btn-group-sm">
           <router-link :to="`/document-types/form?id=${data.item.id}`" class="btn btn-sm btn-outline-primary me-1">
             Edit
           </router-link>
           <button @click="deleteDocType(data.item.id)" class="btn btn-sm btn-outline-danger">Delete</button>
+          </div>
         </td>
       </template>
     </b-table>
@@ -88,8 +90,10 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, getCurrentInstance } from 'vue';
   import axios from 'axios';
+  
+  const { proxy } = getCurrentInstance();
 
   const docTypes = ref([]);
   const search = ref('');
@@ -126,14 +130,21 @@
     );
   });
 
-  const deleteDocType = async id => {
-    if (!confirm('Are you sure you want to delete this document type?')) return;
-    try {
-      await axios.delete(`/api/document-types/${id}/`);
-      docTypes.value = docTypes.value.filter(doc => doc.id !== id);
-    } catch (err) {
-      console.error('Error deleting document type', err);
-    }
+  const deleteDocType = id => {
+    proxy.confirmDelete(
+      'Are you sure?',
+      'This action cannot be undone.',
+      async () => {
+        try {
+          await axios.delete(`/api/document-types/${id}/`);
+          docTypes.value = docTypes.value.filter(doc => doc.id !== id);
+          proxy.notifyToastSuccess('The document type has been deleted.');
+        } catch (err) {
+          console.error('Error deleting document type', err);
+          proxy.notifyError('Error deleting the document type.');
+        }
+      }
+    );
   };
 </script>
 

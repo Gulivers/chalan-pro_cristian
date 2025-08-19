@@ -105,7 +105,7 @@
               },
               { text: 'Product Brands', route: '/product-brands', permission: 'appinventory.view_productbrand' },
               { text: 'Unit Category', route: '/unit-categories', permission: 'appinventory.view_unitcategory' },
-              { text: 'Product Units', route: '/product-units', permission: 'appinventory.view_productunit' },
+              // { text: 'Product Units', route: '/product-units', permission: 'appinventory.view_productunit' },
               { text: 'Unit Measures', route: '/unit-measures', permission: 'appinventory.view_unitofmeasure' },
               { text: 'Price Types', route: '/price-types', permission: 'appinventory.view_pricetype' },
               { text: 'Products', route: '/products', permission: 'appinventory.view_product' },
@@ -116,6 +116,7 @@
             isOpen: false,
             children: [
               { text: 'Transactions Types', route: '/document-types', permission: 'apptransactions.view_documenttype' },
+              { text: 'Party Types', route: '/party-types', permission: 'apptransactions.view_partytype' },
             ],
           },
           {

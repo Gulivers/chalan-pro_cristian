@@ -33,7 +33,7 @@ const WareHouseFormComponent = () => import('@components/inventory/WarehouseForm
 const DynamicForm = () => import('@components/inventory/DynamicForm.vue');
 const ProductCategoryView = () => import('@views/inventory/ProductCategoryView.vue');
 const ProductBrandView = () => import('@views/inventory/ProductBrandView.vue');
-const ProductUnitView = () => import('@views/inventory/ProductUnitView.vue');
+// const ProductUnitView = () => import('@views/inventory/ProductUnitView.vue');
 const UnitOfMeasureView = () => import('@views/inventory/UnitOfMeasureView.vue');
 const UnitCategoryView = () => import('@views/inventory/UnitCategoryView.vue');
 const PriceTypeView = () => import('@views/inventory/PriceTypeView.vue');
@@ -41,7 +41,9 @@ const ProductListView = () => import('@views/inventory/ProductListView.vue');
 
 // Transactions
 const DocTypeListView = () => import('@views/transactions/DocTypeListView.vue');
-const DocTypeFormComponent = () => import('@components/transactions/DocTypeFormComponent.vue.vue');
+const DocTypeForm = () => import('@components/transactions/DocTypeForm.vue');
+const PartyTypeListView = () => import('@views/transactions/PartyTypeListView.vue');
+const PartyTypeForm = () => import('@components/transactions/PartyTypeForm.vue');
 
 
 // ───────────────────────────────────────────────────────────
@@ -525,8 +527,20 @@ const routes = [
   {
     path: '/document-types/form',
     name: 'document-types-form',
-    component: DocTypeFormComponent,
+    component: DocTypeForm,
     meta: { requiresAuth: true, requiredPermissions: ['apptransactions.add_documenttype'] },
+  },
+  {
+    path: '/party-types',
+    name: 'party-types',
+    component: PartyTypeListView,
+    meta: { requiresAuth: true, requiredPermissions: ['apptransactions.view_partytype'] },
+  },
+  {
+    path: '/party-types/form',
+    name: 'party-types-form',
+    component: PartyTypeForm,
+    meta: { requiresAuth: true, requiredPermissions: ['apptransactions.add_partytype'] },
   },
 ];
 

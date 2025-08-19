@@ -9,8 +9,15 @@ from appinventory.models import Product, UnitOfMeasure, Warehouse, PriceType, Pr
 User = get_user_model()
 
 class PartyType(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=150, unique=True)
+    description = models.TextField(blank=True)  # optional
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Party Type"
+        verbose_name_plural = "Party Types"
+        ordering = ["-id"]
 
     def __str__(self):
         return self.name
@@ -67,6 +74,12 @@ class DocumentType(models.Model):
         default=0
     )
     is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ["type_code"]
+        verbose_name = "Document Type"
+        verbose_name_plural = "Document Types"
+        ordering = ["-id"]
 
     def __str__(self):
         return f"{self.type_code} - {self.description}"

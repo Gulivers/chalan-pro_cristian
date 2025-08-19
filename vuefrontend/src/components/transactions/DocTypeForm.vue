@@ -26,7 +26,7 @@
             <div class="col-md-6 mb-3">
               <div class="row">
                 <div class="col-md-4">
-                  <label for="type_code" class="form-label fw-bold">
+                  <label for="type_code" class="form-label">
                     Type Code
                     <span class="text-danger">*</span>
                   </label>
@@ -78,7 +78,7 @@
               </h6>
             </div>
             <div class="col-md-4 mb-3">
-              <label for="stock_movement" class="form-label fw-bold">Stock Movement</label>
+              <label for="stock_movement" class="form-label">Stock Movement</label>
               <select 
                 id="stock_movement" 
                 v-model="form.stock_movement" 
@@ -90,7 +90,6 @@
                 <option :value="-1">-1 Exit</option>
                 <option :value="0">0 Neutral</option>
               </select>
-              <div class="form-text">Defines how it affects inventory</div>
             </div>
             <div class="col-md-4 mb-3">
               <label class="form-label fw-bold">Affects Inventory</label>
@@ -167,7 +166,7 @@
                   data-bs-placement="top"
                   title="For transactions with suppliers" />
                 <label
-                  class="form-check-label fw-bold"
+                  class="form-check-label"
                   for="is_purchase">
                   Purchase Document
                 </label>
@@ -183,7 +182,7 @@
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
                   title="For transactions with customers" />
-                <label class="form-check-label fw-bold" for="is_sales">Sales Document</label>
+                <label class="form-check-label" for="is_sales">Sales Document</label>
               </div>
             </div>
             <div class="col-md-4 mb-3">
@@ -196,7 +195,7 @@
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
                   title="Applies taxes to the document" />
-                <label class="form-check-label fw-bold" for="is_taxable">Subject to Taxes</label>
+                <label class="form-check-label" for="is_taxable">Subject to Taxes</label>
               </div>
             </div>
           </div>
@@ -209,7 +208,7 @@
                 Status
               </h6>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <div class="form-check form-switch">
                 <input 
                   id="is_active" 
@@ -219,7 +218,7 @@
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
                   title="Allows using this type in transactions" />
-                <label class="form-check-label fw-bold" for="is_active">Active Document Type</label>
+                <label class="form-check-label" for="is_active">Active Document Type</label>
               </div>
             </div>
           </div>
@@ -249,6 +248,7 @@
   import { ref, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import axios from 'axios';
+  import Swal from 'sweetalert2';
   import '@assets/css/base.css';
   import { Tooltip } from 'bootstrap';
 
@@ -273,7 +273,7 @@
   const id = route.query.id;
 
   onMounted(async () => {
-    // inicializa tooltips bootstrap
+    // initialize bootstrap tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(el => new Tooltip(el));
 
@@ -284,7 +284,7 @@
         form.value = data;
       } catch (error) {
         console.error('Error loading data:', error);
-        alert('Error loading the document type.');
+        Swal.fire('Oops!', 'Error loading the document type.', 'error');
       }
     }
   });
@@ -299,7 +299,20 @@
       router.push('/document-types');
     } catch (error) {
       console.error('Error saving:', error);
-      alert('Error saving the document type.');
+      const status = error?.response?.status;
+      const data = error?.response?.data;
+      if (status === 400 && data) {
+        if (data.type_code) {
+          Swal.fire('Oops!', 'The Type Code already exists. Please use a unique code.', 'error');
+        } else {
+          const messages = Object.entries(data)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join('\n');
+          Swal.fire('Oops!', messages || 'There were validation errors.', 'error');
+        }
+      } else {
+        Swal.fire('Oops!', 'Error saving the document type.', 'error');
+      }
     }
   };
 </script>

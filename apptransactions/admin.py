@@ -8,8 +8,10 @@ from .models import (
 
 @admin.register(PartyType)
 class PartyTypeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_active')
-    search_fields = ('name',)
+    list_display = ('name', 'description', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'description')
+    ordering = ('name',)
 
 @admin.register(PartyCategory)
 class PartyCategoryAdmin(admin.ModelAdmin):
