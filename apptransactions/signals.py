@@ -1,3 +1,18 @@
+"""
+Sistema de Señales para Gestión Automática de Inventario
+
+Este módulo implementa señales de Django que automatizan la sincronización
+entre transacciones de documentos y movimientos de inventario.
+
+Funcionalidades: oahp
+- Crear/actualizar movimientos de inventario al guardar líneas de documento
+- Eliminar movimientos de inventario al eliminar líneas de documento
+- Manejo automático de entradas/salidas de productos en almacenes
+- Consistencia de datos mediante transacciones atómicas
+
+Autor: Sistema Chalan-Pro
+"""
+
 from decimal import Decimal
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver

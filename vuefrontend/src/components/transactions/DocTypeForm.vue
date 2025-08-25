@@ -9,7 +9,7 @@
       <div class="card-header d-flex justify-content-center align-items-center">
         <h5 class="mb-0 text-center">
           <i class="fas fa-file-alt me-2"></i>
-          {{ isEditMode ? 'Edit Document Type' : 'New Document Type' }}
+          {{ isViewMode ? 'View Document Type' : (isEditMode ? 'Edit Document Type' : 'New Document Type') }}
         </h5>
       </div>
 
@@ -39,6 +39,7 @@
                     class="form-control"
                     placeholder="Ex: INCOME, SUPRET"
                     required
+                    :disabled="isViewMode || submitting"
                     data-bs-toggle="tooltip"
                     data-bs-placement="top"
                     title="Unique code to identify the document type" />
@@ -61,6 +62,7 @@
                     class="form-control"
                     placeholder="Document type description"
                     required
+                    :disabled="isViewMode || submitting"
                     data-bs-toggle="tooltip"
                     data-bs-placement="top"
                     title="Descriptive name for the document type" />
@@ -83,6 +85,7 @@
                 id="stock_movement" 
                 v-model="form.stock_movement" 
                 class="form-select"
+                :disabled="isViewMode || submitting"
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
                 title="Defines how it affects inventory">
@@ -100,6 +103,7 @@
                     v-model="form.affects_physical"
                     class="form-check-input"
                     type="checkbox"
+                    :disabled="isViewMode || submitting"
                     data-bs-toggle="tooltip"
                     data-bs-placement="top"
                     title="Affects physical inventory count" />
@@ -111,6 +115,7 @@
                     v-model="form.affects_logical" 
                     class="form-check-input" 
                     type="checkbox"
+                    :disabled="isViewMode || submitting"
                     data-bs-toggle="tooltip"
                     data-bs-placement="top"
                     title="Affects logical inventory tracking" />
@@ -127,6 +132,7 @@
                     v-model="form.affects_accounting"
                     class="form-check-input"
                     type="checkbox"
+                    :disabled="isViewMode || submitting"
                     data-bs-toggle="tooltip"
                     data-bs-placement="top"
                     title="Affects accounting records and financial reports" />
@@ -138,6 +144,7 @@
                     v-model="form.warehouse_required"
                     class="form-check-input"
                     type="checkbox"
+                    :disabled="isViewMode || submitting"
                     data-bs-toggle="tooltip"
                     data-bs-placement="top"
                     title="Requires warehouse selection for this document type" />
@@ -162,6 +169,7 @@
                   v-model="form.is_purchase"
                   class="form-check-input"
                   type="checkbox"
+                  :disabled="isViewMode || submitting"
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
                   title="For transactions with suppliers" />
@@ -179,6 +187,7 @@
                   v-model="form.is_sales" 
                   class="form-check-input" 
                   type="checkbox"
+                  :disabled="isViewMode || submitting"
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
                   title="For transactions with customers" />
@@ -192,6 +201,7 @@
                   v-model="form.is_taxable" 
                   class="form-check-input" 
                   type="checkbox"
+                  :disabled="isViewMode || submitting"
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
                   title="Applies taxes to the document" />
@@ -215,6 +225,7 @@
                   v-model="form.is_active" 
                   class="form-check-input" 
                   type="checkbox"
+                  :disabled="isViewMode || submitting"
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
                   title="Allows using this type in transactions" />
@@ -231,9 +242,19 @@
                   <i class="fas fa-times me-1"></i>
                   Cancel
                 </router-link>
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-save me-1"></i>
-                  {{ isEditMode ? 'Update' : 'Create' }}
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  :disabled="isViewMode || submitting"
+                >
+                  <span
+                    v-if="submitting"
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  <i v-else class="fas fa-save me-1"></i>
+                  {{ isEditMode ? (submitting ? 'Updating...' : 'Update') : (submitting ? 'Creating...' : 'Create') }}
                 </button>
               </div>
             </div>
@@ -245,76 +266,78 @@
 </template>
 
 <script setup>
-  import { ref, onMounted } from 'vue';
-  import { useRoute, useRouter } from 'vue-router';
-  import axios from 'axios';
-  import Swal from 'sweetalert2';
-  import '@assets/css/base.css';
-  import { Tooltip } from 'bootstrap';
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
+import Swal from 'sweetalert2'
+import '@assets/css/base.css'
+import { Tooltip } from 'bootstrap'
 
-  const route = useRoute();
-  const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 
-  const isEditMode = ref(false);
-  const form = ref({
-    type_code: '',
-    description: '',
-    affects_physical: true,
-    affects_logical: true,
-    affects_accounting: false,
-    is_taxable: false,
-    is_purchase: false,
-    is_sales: false,
-    warehouse_required: true,
-    stock_movement: 0,
-    is_active: true,
-  });
+const submitting = ref(false)
+const id = route.query.id
+const isViewMode = computed(() => route.query.mode === 'view')
+const isEditMode = computed(() => !!id && !isViewMode.value)
 
-  const id = route.query.id;
+const form = ref({
+  type_code: '',
+  description: '',
+  affects_physical: true,
+  affects_logical: true,
+  affects_accounting: false,
+  is_taxable: false,
+  is_purchase: false,
+  is_sales: false,
+  warehouse_required: true,
+  stock_movement: 0,
+  is_active: true
+})
 
-  onMounted(async () => {
-    // initialize bootstrap tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(el => new Tooltip(el));
+onMounted(async () => {
+  // initialize bootstrap tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(el => new Tooltip(el))
 
-    if (id) {
-      isEditMode.value = true;
-      try {
-        const { data } = await axios.get(`/api/document-types/${id}/`);
-        form.value = data;
-      } catch (error) {
-        console.error('Error loading data:', error);
-        Swal.fire('Oops!', 'Error loading the document type.', 'error');
-      }
-    }
-  });
-
-  const handleSubmit = async () => {
+  if (id) {
     try {
-      if (isEditMode.value) {
-        await axios.put(`/api/document-types/${id}/`, form.value);
-      } else {
-        await axios.post('/api/document-types/', form.value);
-      }
-      router.push('/document-types');
+      const { data } = await axios.get(`/api/document-types/${id}/`)
+      form.value = data
     } catch (error) {
-      console.error('Error saving:', error);
-      const status = error?.response?.status;
-      const data = error?.response?.data;
-      if (status === 400 && data) {
-        if (data.type_code) {
-          Swal.fire('Oops!', 'The Type Code already exists. Please use a unique code.', 'error');
-        } else {
-          const messages = Object.entries(data)
-            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
-            .join('\n');
-          Swal.fire('Oops!', messages || 'There were validation errors.', 'error');
-        }
-      } else {
-        Swal.fire('Oops!', 'Error saving the document type.', 'error');
-      }
+      console.error('Error loading data:', error)
+      Swal.fire('Oops!', 'Error loading the document type.', 'error')
     }
-  };
+  }
+})
+
+const handleSubmit = async () => {
+  if (isViewMode.value) return
+  submitting.value = true
+  try {
+    if (isEditMode.value) {
+      await axios.put(`/api/document-types/${id}/`, form.value)
+    } else {
+      await axios.post('/api/document-types/', form.value)
+    }
+    router.push('/document-types') // éxito silencioso + redirect
+  } catch (error) {
+    console.error('Error saving:', error)
+    const { status, data } = error?.response || {}
+    if (status === 400 && data) {
+      const messages = Object.entries(data)
+        .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+        .join('\n')
+      await Swal.fire('Oops!', messages || 'There were validation errors.', 'error')
+    } else if (status === 403) {
+      await Swal.fire('Forbidden', 'You do not have permission for this action.', 'error')
+    } else {
+      await Swal.fire('Oops!', 'Error saving the document type.', 'error')
+    }
+  } finally {
+    submitting.value = false
+  }
+}
 </script>
 
 <style scoped></style>

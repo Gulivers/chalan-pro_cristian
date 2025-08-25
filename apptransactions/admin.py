@@ -15,8 +15,10 @@ class PartyTypeAdmin(admin.ModelAdmin):
 
 @admin.register(PartyCategory)
 class PartyCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_active')
-    search_fields = ('name',)
+    list_display = ('name', 'description', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'description')
+    ordering = ('name',)
 
 @admin.register(Party)
 class PartyAdmin(admin.ModelAdmin):
@@ -37,7 +39,7 @@ class PartyAdmin(admin.ModelAdmin):
 
 @admin.register(DocumentType)
 class DocumentTypeAdmin(admin.ModelAdmin):
-    list_display = ('type_code', 'description', 'stock_movement', 'is_active')
+    list_display = ('id', 'type_code', 'description', 'stock_movement', 'is_active')
     search_fields = ('type_code', 'description')
     list_filter = ('is_active', 'stock_movement')
 

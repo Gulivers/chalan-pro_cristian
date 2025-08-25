@@ -128,30 +128,18 @@ router.push({ name: 'party-types' }).catch(() => router.push('/party-types'))
 📋 Listas (bootstrap-vue-next)
 
 b-table con columns mínimas + actions (view/edit/delete).
-
 Search client-side (b-form-input).
-
 Entries per page (10, 25, 50, 100).
-
 b-pagination.
 
 🔹 Acciones
 
 Create →
-
 router.push({ name: 'party-types-form', query: { mode: 'create' }})
-
-
 View →
-
 router.push({ name: 'party-types-form', query: { mode: 'view', id }})
-
-
 Edit →
-
 router.push({ name: 'party-types-form', query: { mode: 'edit', id }})
-
-
 Delete → con confirm de SweetAlert, luego fetch().
 
 🧭 Rutas (patrón recomendado)
@@ -160,10 +148,8 @@ Dos rutas son suficientes:
 
 // Lista
 { path: '/party-types', name: 'party-types', component: PartyTypeListView, meta: { requiresAuth: true } },
-
 // Form multi-modo por query (?mode=view|edit|create&id=)
 { path: '/party-types/form', name: 'party-types-form', component: PartyTypeForm, meta: { requiresAuth: true } },
-
 
 El form detecta el modo por query.
 Si prefieres rutas separadas, asegúrate de mantener la misma lógica interna (trim, view mode, redirect por nombre).
@@ -171,13 +157,64 @@ Si prefieres rutas separadas, asegúrate de mantener la misma lógica interna (t
 🧩 Últimas 3 mejoras aplicadas a PartyTypeForm.vue
 
 Trim antes de enviar.
-
 Validación de longitud mínima.
-
 Validación de requeridos antes del submit.
 
 ---
+🧩 Patrón CRUD — Política de Unicidad y Validaciones (Chalan-Pro)
 
+Usaremos unique=True en los modelos. ✅
+Frontend, captura 400/403/otros y muestra Swal ✅
+No usaremos validaciones a nivel de serializer ni view para tablas maestras con menos de 4 campos. ✅
+Sí usaremos validaciones a nivel de serializer y view para tablas transaccionales con más de 1 campos ✅
+(Opcional, recomendado): mapear errores de BD a 400 en el back cuando queramos mensajes por campo más consistentes en transaccionales.
+
+---
+
+<div class="row mt-4">
+  <div class="col-12 d-flex flex-column flex-sm-row justify-content-center align-items-center gap-2">
+    <!-- botones iguales al ejemplo de arriba -->
+  </div>
+</div>
+🔮 Clave: d-flex justify-content-center centra horizontalmente; gap-2 separa; y con la opción 2, flex-column flex-sm-row apila en pantallas chicas y alinea en fila desde sm.
+
+---
+
+## 🔧 Backend - Exception Handler
+
+El sistema incluye un manejador personalizado de excepciones (`project/api/exception_handler.py`) que:
+
+- **ProtectedError**: Captura intentos de eliminar registros que están en uso por otros modelos, devolviendo HTTP 409 con mensaje claro
+- **IntegrityError**: Maneja violaciones de restricciones de base de datos (foreign keys, constraints) con el mismo patrón
+- **Respuesta consistente**: Siempre devuelve `{"detail": "This record is in use and cannot be deleted. Inactivate it instead.", "code": "in_use"}` para estos casos
+- **Frontend**: El frontend puede capturar estos errores 409 y mostrar mensajes apropiados al usuario
+
+---
+
+🔑 Notas sobre unicidad case-insensitive (MySQL vs Postgres)
+
+MySQL 8 + utf8mb4_0900_ai_ci
+ci = case-insensitive, ai = accent-insensitive.
+Los índices únicos con esta collation ya impiden duplicados ignorando mayúsculas/minúsculas y acentos.
+Ej.: "ACME", "acme" o "Ácme" se consideran el mismo valor → el UNIQUE falla.
+
+Postgres
+Los índices únicos son case-sensitive por defecto, la collation no cambia esto.
+Necesitas usar:
+CITEXT (tipo de dato case-insensitive), o
+UniqueConstraint(Lower('campo'), name='uniq_lower_campo').
+
+Django/DRF
+
+El UniqueValidator ayuda a atrapar duplicados antes de que llegue a la BD.
+En MySQL puede parecer redundante, pero mejora la UX (errores más rápidos y claros).
+
+Para verificar case sentitive en la BD para que unique=True trabaje
+  SHOW VARIABLES LIKE 'collation_%';
+  SHOW FULL COLUMNS FROM apptransactions_partycategory LIKE 'name';
+Si la columna name está en _ci, unique=True será case-insensitive para evitar duplicados de datos.
+
+---
 
 ## 🛠️ En resumen
 > Código limpio, modular

@@ -1,6 +1,7 @@
 /* ACTION ICONS */
 
-.viewlink, .inlineviewlink {
+.viewlink,
+.inlineviewlink {
     padding-left: 25px;
     background: url(../img/icon-viewlink.svg) 0 1px no-repeat;
     background-size: 19px 19px;
@@ -11,7 +12,8 @@
     background: url(../img/icon-addlink.svg) 0 1px no-repeat;
 }
 
-.changelink, .inlinechangelink {
+.changelink,
+.inlinechangelink {
     padding-left: 25px;
     background: url(../img/icon-changelink.svg) 0 1px no-repeat;
 }
@@ -21,11 +23,13 @@
     background: url(../img/icon-deletelink.svg) 0 1px no-repeat;
 }
 
-a.deletelink:link, a.deletelink:visited {
+a.deletelink:link,
+a.deletelink:visited {
     color: #CC3434;
 }
 
-a.deletelink:focus, a.deletelink:hover {
+a.deletelink:focus,
+a.deletelink:hover {
     color: #993333;
     text-decoration: none;
 }
@@ -33,16 +37,18 @@ a.deletelink:focus, a.deletelink:hover {
 /* para que el evento con nuevo mensaje suba y brille en el listado*/
 .highlight-event {
     animation: flash-highlight 1s ease-in-out;
-  }
-  
-  @keyframes flash-highlight {
+}
+
+@keyframes flash-highlight {
     0% {
-      background-color: #fff3cd; /* Amarillo claro como alerta */
+        background-color: #fff3cd;
+        /* Amarillo claro como alerta */
     }
+
     100% {
-      background-color: transparent;
+        background-color: transparent;
     }
-  }
+}
 
 /* Custom Placeholder Styles */
 .form-control::placeholder,
@@ -137,3 +143,50 @@ a.deletelink:focus, a.deletelink:hover {
     background-position: right center;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }
+
+.btn-clear-x {
+    background: none;
+    border: 0;
+    color: #0d6efd;
+    /* azul Bootstrap */
+    font-size: 1.2rem;
+    /* tamaño de la X */
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    z-index: 2;
+    /* asegura que quede sobre el input */
+}
+
+.btn-clear-x:hover {
+    color: #0a58ca;
+    /* más oscuro al pasar el mouse */
+}
+
+.search-wrapper { position: relative; }
+.search-wrapper .form-control { padding-right: 2rem; }
+.search-wrapper .btn-clear-x {
+  position: absolute;
+  top: 50%;
+  right: .5rem;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  color: #0d6efd;       /* azul Bootstrap */
+  font-size: 1.2rem;    /* tamaño del × */
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  z-index: 3;           /* por encima del input */
+}
+.search-wrapper .btn-clear-x:hover { color: #0a58ca; }
+
+table td {
+    vertical-align: middle;
+  }
+  .btn-group {
+    justify-content: center;
+  }
+  .btn-group .btn:not(:last-child) {
+    margin-right: 2px;
+  }

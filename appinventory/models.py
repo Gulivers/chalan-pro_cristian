@@ -16,7 +16,7 @@ class UnitCategory(models.Model):
 class UnitOfMeasure(models.Model):
     name = models.CharField(max_length=50, unique=True)
     code = models.CharField(max_length=10, unique=True)
-    category = models.ForeignKey(UnitCategory, on_delete=models.CASCADE)
+    category = models.ForeignKey(UnitCategory,  on_delete=models.PROTECT)
     reference_unit = models.BooleanField(default=False, help_text="Unidad base para conversiones")
 
     SIGN_CHOICES = [
@@ -45,7 +45,7 @@ class UnitOfMeasure(models.Model):
 
 
 class Warehouse(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     location = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -54,7 +54,7 @@ class Warehouse(models.Model):
 
 
 class ProductCategory(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -63,7 +63,7 @@ class ProductCategory(models.Model):
 
 
 class ProductBrand(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -73,10 +73,10 @@ class ProductBrand(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=255)
     sku = models.CharField(max_length=100, unique=True)
-    category = models.ForeignKey(ProductCategory, on_delete=models.SET_NULL, null=True)
-    brand = models.ForeignKey(ProductBrand, on_delete=models.SET_NULL, null=True, blank=True)
+    category = models.ForeignKey(ProductCategory,  on_delete=models.PROTECT, null=True)
+    brand = models.ForeignKey(ProductBrand,  on_delete=models.PROTECT, null=True, blank=True)
     reorder_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    unit_default = models.ForeignKey(UnitOfMeasure, on_delete=models.SET_NULL, null=True)
+    unit_default = models.ForeignKey(UnitOfMeasure, on_delete=models.PROTECT, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -94,8 +94,8 @@ class PriceType(models.Model):
 
 class ProductPrice(models.Model):
     product = models.ForeignKey(Product, related_name="prices", on_delete=models.CASCADE)
-    price_type = models.ForeignKey(PriceType, on_delete=models.CASCADE)
-    unit = models.ForeignKey(UnitOfMeasure, on_delete=models.CASCADE)
+    price_type = models.ForeignKey(PriceType, on_delete=models.PROTECT)
+    unit = models.ForeignKey(UnitOfMeasure, on_delete=models.PROTECT)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     is_default = models.BooleanField(default=False)
     is_sale = models.BooleanField(default=False)
@@ -133,12 +133,12 @@ class InventoryMovement(models.Model):
         (0, 'Ajuste')
     ]
 
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT)
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     movement_type = models.SmallIntegerField(choices=MOVEMENT_TYPE_CHOICES)
     reason = models.CharField(max_length=255, blank=True, null=True)
-    unit = models.ForeignKey(UnitOfMeasure, on_delete=models.SET_NULL, null=True, blank=True)
+    unit = models.ForeignKey(UnitOfMeasure, on_delete=models.PROTECT, null=True, blank=True)
     document = models.CharField(max_length=100, blank=True, null=True)
     line_id = models.PositiveIntegerField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)

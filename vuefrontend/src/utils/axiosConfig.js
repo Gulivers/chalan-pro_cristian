@@ -1,5 +1,6 @@
 // Interceptor de solicitudes de Axios para manejar la autenticación
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import { useAuthStore } from '../stores/auth';
 import router from '../router';
 
@@ -48,15 +49,34 @@ export function setupAxiosInterceptors() {
       return response;
     },
     async error => {
-      const originalRequest = error.config;
-      if (error.response.status === 401 && !originalRequest._retry) {
+      const originalRequest = error?.config;
+      const status = error?.response?.status;
+      const data = error?.response?.data || {};
+      const method = (originalRequest?.method || '').toUpperCase();
+
+      // 401 → limpiar y redirigir a login
+      if (status === 401 && !originalRequest?._retry) {
         originalRequest._retry = true;
-        // Se eliminó la lógica de refresco de token
         localStorage.removeItem('authToken');
         localStorage.removeItem('userPermissions');
         router.push('/login');
         return Promise.reject(error);
       }
+
+      // 👇 NUEVO: Manejo global del PROTECT (DELETE → 409 Conflict)
+      // Backend debe devolver: { detail: "...", code: "in_use" }
+      if (
+        method === 'DELETE' &&
+        status === 409 &&
+        (data.code === 'in_use' || /in use/i.test(data.detail || ''))
+      ) {
+        await Swal.fire(
+          'Oops!',
+          data.detail || 'This record is in use and cannot be deleted. Inactivate it instead.',
+          'error'
+        );
+      }
+
       return Promise.reject(error);
     }
   );

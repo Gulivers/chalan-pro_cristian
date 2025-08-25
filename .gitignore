@@ -44,6 +44,15 @@ auditapp/migrations/*
 appschedule/migrations/*
 !appschedule/migrations/__init__.py
 
+apptransactions/migrations/*
+!apptransactions/migrations/__init__.py
+
+appcontacts/migrations/*
+!appcontacts/migrations/__init__.py
+
+appinventory/migrations/*
+!appinventory/migrations/__init__.py
+
 # Ignore settings.py
 project/settings.py
 

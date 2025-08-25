@@ -44,6 +44,10 @@ const DocTypeListView = () => import('@views/transactions/DocTypeListView.vue');
 const DocTypeForm = () => import('@components/transactions/DocTypeForm.vue');
 const PartyTypeListView = () => import('@views/transactions/PartyTypeListView.vue');
 const PartyTypeForm = () => import('@components/transactions/PartyTypeForm.vue');
+const PartyCategoryListView = () => import('@views/transactions/PartyCategoryListView.vue');
+const PartyCategoryForm = () => import('@components/transactions/PartyCategoryForm.vue');
+const PartyForm = () => import('@components/transactions/PartyForm.vue');
+const PartyListView = () => import('@views/transactions/PartyListView.vue');
 
 
 // ───────────────────────────────────────────────────────────
@@ -542,6 +546,31 @@ const routes = [
     component: PartyTypeForm,
     meta: { requiresAuth: true, requiredPermissions: ['apptransactions.add_partytype'] },
   },
+  {
+    path: '/party-categories',
+    name: 'party-categories',
+    component: PartyCategoryListView,
+    meta: { requiresAuth: true, requiredPermissions: ['apptransactions.view_partycategory'] },
+  },
+  {
+    path: '/party-categories/form',
+    name: 'party-categories-form',
+    component: PartyCategoryForm,
+    meta: { requiresAuth: true, requiredPermissions: ['apptransactions.add_partycategory'] },
+  },
+  {
+    path: '/parties',
+    name: 'parties',
+    component: PartyListView,
+    meta: { requiresAuth: true, requiredPermissions: ['apptransactions.view_party'] },
+  },
+  {
+    path: '/parties/form',
+    name: 'parties-form',
+    component: PartyForm,
+    meta: { requiresAuth: true, requiredPermissions: ['apptransactions.add_party'] },
+  },
+  
 ];
 
 

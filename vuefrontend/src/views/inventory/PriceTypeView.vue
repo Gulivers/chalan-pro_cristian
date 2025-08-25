@@ -3,7 +3,8 @@
     <div class="card-header d-flex justify-content-between align-items-center">
       <h6 class="text-primary mb-0">Price Types</h6>
       <button class="btn btn-success" @click="goToCreateForm">
-        <strong>+</strong> New Price Type
+        <strong>+</strong>
+        New Price Type
       </button>
     </div>
 
@@ -14,17 +15,14 @@
       </div>
 
       <div v-else-if="items.length" class="table-responsive">
-        <table
-          class="table table-striped table-hover table-bordered"
-          id="priceTypeTable"
-          ref="priceTypeTable">
+        <table class="table table-striped table-hover table-bordered" id="priceTypeTable" ref="priceTypeTable">
           <thead>
             <tr>
               <th>ID</th>
               <th v-for="field in headers" :key="field">
                 {{ schema[field]?.label || field }}
               </th>
-              <th>Actions</th>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -33,29 +31,30 @@
 
               <td v-for="field in headers" :key="field">
                 <template v-if="typeof item[field] === 'boolean'">
-                  <span
-                    class="badge"
-                    :class="item[field] ? 'bg-success' : 'bg-secondary'">
-                    {{ item[field] ? "Active" : "Inactive" }}
+                  <span class="badge" :class="item[field] ? 'bg-success' : 'bg-secondary'">
+                    {{ item[field] ? 'Active' : 'Inactive' }}
                   </span>
                 </template>
 
                 <template v-else>
-                  {{ item[field] || "—" }}
+                  {{ item[field] || '—' }}
                 </template>
               </td>
 
-              <td>
+              <td class="text-center">
                 <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-success me-1" @click="viewItem(item.id)">View</button>
+                  <button class="btn btn-outline-primary me-1" @click="editItem(item.id)">Edit</button>
                   <button
-                    class="btn btn-outline-success"
-                    @click="viewItem(item.id)">
-                    View
-                  </button>
-                  <button
-                    class="btn btn-outline-primary"
-                    @click="editItem(item.id)">
-                    Edit
+                    class="btn btn-outline-danger"
+                    @click="confirmDelete(item.id)"
+                    :disabled="deletingId === item.id">
+                    <span
+                      v-if="deletingId === item.id"
+                      class="spinner-border spinner-border-sm me-1"
+                      role="status"
+                      aria-hidden="true"></span>
+                    Delete
                   </button>
                 </div>
               </td>
@@ -70,11 +69,11 @@
 </template>
 
 <script>
-  import axios from "axios";
-  import Swal from "sweetalert2";
+  import axios from 'axios';
+  import Swal from 'sweetalert2';
 
   export default {
-    name: "PriceTypeView",
+    name: 'PriceTypeView',
     data() {
       return {
         schema: {},
@@ -82,6 +81,7 @@
         headers: [],
         loading: false,
         dataTable: null,
+        deletingId: null,
       };
     },
     mounted() {
@@ -94,20 +94,20 @@
     methods: {
       fetchSchema() {
         axios
-          .get("/api/schema/pricetype/")
+          .get('/api/schema/pricetype/')
           .then(res => {
             this.schema = res.data || {};
             this.headers = Object.keys(this.schema);
           })
           .catch(err => {
-            console.error("Error fetching schema:", err);
-            this.notifyError("Failed to fetch schema.");
+            console.error('Error fetching schema:', err);
+            this.notifyError('Failed to fetch schema.');
           });
       },
       fetchItems() {
         this.loading = true;
         axios
-          .get("/api/pricetypes/")
+          .get('/api/pricetypes/')
           .then(res => {
             this.items = res.data;
             this.loading = false;
@@ -119,7 +119,7 @@
           })
           .catch(() => {
             this.loading = false;
-            this.notifyError("Failed to load price types.");
+            this.notifyError('Failed to load price types.');
           });
       },
       destroyDataTable() {
@@ -145,9 +145,9 @@
             destroy: true,
             responsive: true,
             pageLength: 50,
-            order: [[0, "desc"]],
+            order: [[0, 'desc']],
             language: {
-              search: "Search:",
+              search: 'Search:',
             },
           });
         } catch (error) {
@@ -155,20 +155,65 @@
         }
       },
       goToCreateForm() {
-        this.$router.push({ name: "price-type-form" });
+        this.$router.push({ name: 'price-type-form' });
       },
       viewItem(id) {
-        this.$router.push({ name: "price-type-view", params: { id } });
+        this.$router.push({ name: 'price-type-view', params: { id } });
       },
       editItem(id) {
-        this.$router.push({ name: "price-type-edit", params: { id } });
+        this.$router.push({ name: 'price-type-edit', params: { id } });
       },
-      notifyError(message = "Something went wrong!") {
+
+      async confirmDelete(id) {
+        const result = await Swal.fire({
+          title: 'Delete?',
+          text: 'This will delete the price type. This action cannot be undone.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, delete',
+          cancelButtonText: 'Cancel',
+        });
+        if (!result.isConfirmed) return;
+        await this.deleteItem(id);
+      },
+
+      async deleteItem(id) {
+        this.deletingId = id;
+        try {
+          await axios.delete(`/api/pricetypes/${id}/`);
+          // refrescar tabla
+          this.destroyDataTable();
+          this.items = this.items.filter(p => p.id !== id);
+          setTimeout(() => {
+            if (this.items.length && this.$refs.priceTypeTable) {
+              this.initDataTable();
+            }
+          }, 50);
+
+          // toast de éxito (patrón)
+          if (this.notifyToastSuccess) {
+            this.notifyToastSuccess('The price type has been deleted.');
+          }
+        } catch (error) {
+          console.error('Error deleting price type:', error);
+          const { status } = error?.response || {};
+          // Tu interceptor ya maneja 409 (in_use) con Swal. Dejamos este genérico adicional por ahora.
+          if (status === 403) {
+            await Swal.fire('Forbidden', 'You do not have permission for this action.', 'error');
+          } else {
+            await Swal.fire('Oops!', 'Error deleting the price type.', 'error');
+          }
+        } finally {
+          this.deletingId = null;
+        }
+      },
+
+      notifyError(message = 'Something went wrong!') {
         Swal.fire({
-          icon: "error",
-          title: "Error",
+          icon: 'error',
+          title: 'Error',
           text: message,
-          confirmButtonText: "OK",
+          confirmButtonText: 'OK',
         });
       },
     },

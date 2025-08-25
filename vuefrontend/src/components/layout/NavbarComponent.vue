@@ -84,11 +84,11 @@
               { text: 'Job Communications', route: '/chat-general' },
             ],
           },
-          { text: 'Contracts', route: '/contracts' },
           {
-            text: 'Piece Work Prices',
+            text: 'Piece Work',
             isOpen: false,
             children: [
+              { text: 'Contracts', route: '/contracts' },
               { text: 'Piece Work Prices', route: '/work-prices' },
               { text: 'Work Prices per Builder', route: '/work-prices-builders' },
             ],
@@ -111,12 +111,20 @@
               { text: 'Products', route: '/products', permission: 'appinventory.view_product' },
             ],
           },
-                    {
+          {
+            text: 'Party',
+            isOpen: false,
+            children: [
+              { text: 'Party Types', route: '/party-types', permission: 'apptransactions.view_partytype' },
+              { text: 'Party Categories', route: '/party-categories', permission: 'apptransactions.view_partycategory' },
+              { text: 'Parties', route: '/parties', permission: 'apptransactions.view_party' },
+            ],
+          },
+          {
             text: 'Transactions',
             isOpen: false,
             children: [
               { text: 'Transactions Types', route: '/document-types', permission: 'apptransactions.view_documenttype' },
-              { text: 'Party Types', route: '/party-types', permission: 'apptransactions.view_partytype' },
             ],
           },
           {

@@ -1,6 +1,8 @@
 # App: transactions (documentos, detalles, clientes, proveedores)
 
 from django.db import models
+from django.db.models import UniqueConstraint
+from django.db.models.functions import Lower
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
@@ -14,7 +16,6 @@ class PartyType(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ["name"]
         verbose_name = "Party Type"
         verbose_name_plural = "Party Types"
         ordering = ["-id"]
@@ -23,14 +24,20 @@ class PartyType(models.Model):
         return self.name
 
 class PartyCategory(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=150, unique=True)
+    description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Party Category"
+        verbose_name_plural = "Party Categories"
+        ordering = ["-id"]
 
     def __str__(self):
         return self.name
 
 class Party(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     rfc = models.CharField(max_length=50, blank=True)
     street = models.CharField(max_length=100, blank=True)
     floor_office = models.CharField(max_length=100, blank=True)
@@ -79,7 +86,6 @@ class DocumentType(models.Model):
         ordering = ["type_code"]
         verbose_name = "Document Type"
         verbose_name_plural = "Document Types"
-        ordering = ["-id"]
 
     def __str__(self):
         return f"{self.type_code} - {self.description}"
@@ -87,8 +93,8 @@ class DocumentType(models.Model):
 class Document(models.Model):
     document_type = models.ForeignKey(DocumentType, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.SET_NULL, null=True)
-    party = models.ForeignKey(Party, on_delete=models.SET_NULL, null=True)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, null=True)
+    party = models.ForeignKey(Party, on_delete=models.PROTECT, null=True)
     builder = models.CharField(max_length=100, blank=True, null=True)
     job = models.CharField(max_length=100, blank=True, null=True)
     lot = models.CharField(max_length=100, blank=True, null=True)
@@ -124,16 +130,16 @@ def __str__(self):
     return "Document"
 
 class DocumentLine(models.Model):
-    document = models.ForeignKey(Document, related_name="lines", on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    document = models.ForeignKey(Document, related_name="lines", on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    unit = models.ForeignKey(UnitOfMeasure, on_delete=models.SET_NULL, null=True)
+    unit = models.ForeignKey(UnitOfMeasure, on_delete=models.PROTECT, null=True)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     final_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.SET_NULL, null=True, blank=True)
-    price_type = models.ForeignKey(PriceType, on_delete=models.SET_NULL, null=True, blank=True)
-    brand = models.ForeignKey(ProductBrand, on_delete=models.SET_NULL, null=True, blank=True)  # Marca específica usada en esta línea, útil para trazabilidad
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, null=True, blank=True)
+    price_type = models.ForeignKey(PriceType, on_delete=models.PROTECT, null=True, blank=True)
+    brand = models.ForeignKey(ProductBrand, on_delete=models.PROTECT, null=True, blank=True)  # Marca específica usada en esta línea, útil para trazabilidad
 
     def clean(self):
         errors = {}

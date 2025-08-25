@@ -1,18 +1,45 @@
 <template>
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3>Type Transactions</h3>
-      <router-link to="/document-types/form" class="btn btn-success">+ New Transaction Type</router-link>
-    </div>
-
-    <div class="mb-3 row">
-      <div class="col-md-4">
-        <input v-model="search" type="text" class="form-control" placeholder="Search by code or description..." />
+  <TxCard class="shadow-sm mt-0">
+    <!-- Header del card -->
+    <template #header>
+      <div class="d-flex justify-content-between align-items-center w-100">
+        <h6 class="text-primary mb-0">Product Categories</h6>
+        <router-link to="/document-types/form" class="btn btn-success">+ New Transaction Type</router-link>
       </div>
+    </template>
+
+    <!-- Filtros arriba de la tabla -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <!-- Entries per page -->
       <div class="col-md-3">
-        <select v-model="perPage" class="form-select">
-          <option v-for="n in [5, 10, 25, 50]" :key="n" :value="n">{{ n }} entries per page</option>
-        </select>
+        <div class="input-group">
+          <select v-model="perPage" class="form-select">
+            <option v-for="n in [5, 10, 25, 50]" :key="n" :value="n">{{ n }}</option>
+          </select>
+          <span class="text-primary p-2">entries per page</span>
+        </div>
+      </div>
+
+      <!-- Search con X inline (sin input-group para evitar stacking raros) -->
+      <div class="col-md-4">
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-primary p-2">Search:</span>
+
+          <!-- wrapper relativo -->
+          <div class="search-wrapper flex-grow-1">
+            <input v-model="search" type="text" class="form-control" placeholder="Search..." autocomplete="off" />
+            <!-- Botón X flotante -->
+            <button
+              v-show="search && search.length"
+              @mousedown.prevent
+              @click="search = ''"
+              type="button"
+              class="btn-clear-x"
+              title="Clear">
+              x
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -61,6 +88,7 @@
         </td>
       </template>
 
+      <!-- Status -->
       <template #cell(is_active)="data">
         <td class="text-center">
           <span v-if="data.item.is_active" class="badge bg-success">Active</span>
@@ -68,31 +96,34 @@
         </td>
       </template>
 
+      <!-- Actions -->
       <template #cell(actions)="data">
         <td class="text-center">
-          <div class="btn-group btn-group-sm">
-          <router-link :to="`/document-types/form?id=${data.item.id}`" class="btn btn-sm btn-outline-primary me-1">
-            Edit
-          </router-link>
-          <button @click="deleteDocType(data.item.id)" class="btn btn-sm btn-outline-danger">Delete</button>
+          <div class="btn-group btn-group-sm" role="group">
+            <router-link :to="`/document-types/form?id=${data.item.id}&mode=view`" class="btn btn-outline-success me-1">
+              View
+            </router-link>
+            <router-link :to="`/document-types/form?id=${data.item.id}&mode=edit`" class="btn btn-outline-primary me-1">
+              Edit
+            </router-link>
+            <button @click="deleteDocType(data.item.id)" class="btn btn-outline-danger">Delete</button>
           </div>
         </td>
       </template>
     </b-table>
 
-    <b-pagination
-      v-model="currentPage"
-      :total-rows="filteredItems.length"
-      :per-page="perPage"
-      align="center"
-      class="mt-3" />
-  </div>
+    <div class="d-flex justify-content-end mt-3">
+      <b-pagination v-model="currentPage" :total-rows="filteredItems.length" :per-page="perPage" />
+    </div>
+  </TxCard>
 </template>
 
 <script setup>
+  import TxCard from '@/components/layout/TxCard.vue';
   import { ref, computed, onMounted, getCurrentInstance } from 'vue';
   import axios from 'axios';
-  
+  import '@/assets/css/base.css';
+
   const { proxy } = getCurrentInstance();
 
   const docTypes = ref([]);
@@ -118,6 +149,7 @@
       docTypes.value = res.data;
     } catch (err) {
       console.error('Error fetching document types', err);
+      proxy?.notifyError?.('Error loading document types.');
     }
   };
 
@@ -126,30 +158,24 @@
   const filteredItems = computed(() => {
     if (!search.value) return docTypes.value;
     return docTypes.value.filter(item =>
-      `${item.type_code} ${item.description}`.toLowerCase().includes(search.value.toLowerCase())
+      `${item.type_code} ${item.description || ''}`.toLowerCase().includes(search.value.toLowerCase())
     );
   });
 
   const deleteDocType = id => {
-    proxy.confirmDelete(
-      'Are you sure?',
-      'This action cannot be undone.',
-      async () => {
-        try {
-          await axios.delete(`/api/document-types/${id}/`);
-          docTypes.value = docTypes.value.filter(doc => doc.id !== id);
-          proxy.notifyToastSuccess('The document type has been deleted.');
-        } catch (err) {
-          console.error('Error deleting document type', err);
-          proxy.notifyError('Error deleting the document type.');
-        }
+    proxy.confirmDelete('Are you sure?', 'This action cannot be undone.', async () => {
+      try {
+        await axios.delete(`/api/document-types/${id}/`);
+        docTypes.value = docTypes.value.filter(doc => doc.id !== id);
+        proxy?.notifyToastSuccess?.('The document type has been deleted.');
+      } catch (err) {
+        console.error('Error deleting document type', err);
+        proxy?.notifyError?.('Error deleting the document type.');
       }
-    );
+    });
   };
 </script>
 
 <style scoped>
-  table td {
-    vertical-align: middle;
-  }
+
 </style>
