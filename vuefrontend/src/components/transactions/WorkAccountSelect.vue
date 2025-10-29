@@ -115,13 +115,13 @@
                     :class="{ 'is-invalid': serverErrors.title }"
                     v-model="local.title"
                     @input="onTitleTyped"
-                    placeholder="Will auto-fill from Job + Lot/Address"
+                    placeholder="Will auto-fill from Lot/Address + Job"
                     maxlength="200"
                     autocomplete="off"
                     :disabled="isDisabled"
                     required
                     v-tt="
-                      'Friendly identifier (UPPERCASE). Autocompletes from Job + Lot/Address; you can override it.'
+                      'Friendly identifier (UPPERCASE). Autocompletes from Lot/Address + Job; you can override it.'
                     " />
                 </div>
                 <div class="form-text text-center">TITLE. Always stored in UPPERCASE.</div>
@@ -325,6 +325,8 @@
     },
     /** Route name to redirect after silent success (CRUD Pattern) */
     listRouteName: { type: String, default: 'work-accounts' },
+    /** When used inside a modal, disable router redirection on save/cancel */
+    redirectOnSuccess: { type: Boolean, default: true },
   });
 
   // Detectar modo por query parameters o prop (similar a PartyForm.vue)
@@ -461,15 +463,20 @@
       return;
     }
 
-    const jobLabel = jobName.value;
-    if (jobLabel) {
-      if (lot) local.title = `${jobLabel} ${lot}`.toUpperCase();
-      else if (address) local.title = `${jobLabel} ${address}`.toUpperCase();
-      else local.title = jobLabel.toUpperCase();
+    const jobLabel = (jobName.value || '').toUpperCase();
+    if (lot) {
+      local.title = jobLabel ? `${lot} ${jobLabel}` : `${lot}`;
+    } else if (address) {
+      local.title = jobLabel ? `${address} ${jobLabel}` : `${address}`;
     } else {
-      local.title = (local.title || '').toUpperCase();
+      local.title = jobLabel || (local.title || '').toUpperCase();
     }
   }
+
+  // Recalcular el TITLE cuando se resuelva asincrónicamente el nombre del Job
+  watch(jobName, () => {
+    if (!titleManuallyEdited.value) autoFillTitle();
+  });
 
   watch(
     () => [local.lot, local.address, local.job, local.builder],
@@ -526,6 +533,7 @@
       // Resolver nombre del job si existe
       if (data.job) {
         await resolveJobName(data.job);
+        if (!titleManuallyEdited.value) autoFillTitle();
       }
     } catch (error) {
       console.error('Error loading work account:', error);
@@ -635,40 +643,44 @@
       // Emit saved event for modal usage
       emit('saved', savedData);
 
-      // Ask if user wants to sync schedule titles
-      const { isConfirmed } = await Swal.fire({
-        title: 'Update schedule titles?',
-        text: 'Do you want to propagate this title change to all related schedule events? This will overwrite customized titles.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, update',
-        cancelButtonText: 'No, keep as is'
-      })
+      // Solo preguntar por sincronizar títulos al EDITAR (no al crear)
+      if (isEditMode) {
+        const { isConfirmed } = await Swal.fire({
+          title: 'Update schedule titles?',
+          text: 'Do you want to propagate this title change to all related schedule events? This will overwrite customized titles.',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, update',
+          cancelButtonText: 'No, keep as is'
+        });
 
-      if (isConfirmed) {
-        try {
-          const waId = isEditMode ? id : savedData?.id
-          if (waId) {
-            const syncResp = await axios.post(`/api/work-accounts/${waId}/sync-schedule-titles/`)
+        if (isConfirmed) {
+          try {
+            const waId = id;
+            if (waId) {
+              const syncResp = await axios.post(`/api/work-accounts/${waId}/sync-schedule-titles/`);
+              await Swal.fire({
+                icon: 'success',
+                title: 'Schedule Updated',
+                text: `Updated ${syncResp.data?.updated_events || 0} events and ${syncResp.data?.updated_drafts || 0} drafts.`,
+                timer: 2500,
+                showConfirmButton: false
+              });
+            }
+          } catch (e) {
             await Swal.fire({
-              icon: 'success',
-              title: 'Schedule Updated',
-              text: `Updated ${syncResp.data?.updated_events || 0} events and ${syncResp.data?.updated_drafts || 0} drafts.`,
-              timer: 2500,
-              showConfirmButton: false
-            })
+              icon: 'error',
+              title: 'Sync Failed',
+              text: 'Could not synchronize schedule titles. You can try again later from Work Accounts.',
+            });
           }
-        } catch (e) {
-          await Swal.fire({
-            icon: 'error',
-            title: 'Sync Failed',
-            text: 'Could not synchronize schedule titles. You can try again later from Work Accounts.',
-          })
         }
       }
 
-      // Éxito silencioso → Redirect por nombre (con fallback al path)
-      goList();
+      // Redirección solo si está habilitada (p. ej., no en modal)
+      if (props.redirectOnSuccess) {
+        goList();
+      }
     } catch (error) {
       console.error('Error saving work account:', error);
       const { status, data } = error?.response || {};
@@ -698,7 +710,11 @@
   }
 
   function onCancel() {
-    goList();
+    if (props.redirectOnSuccess) {
+      goList();
+    } else {
+      emit('cancel');
+    }
   }
 
   // === Lifecycle ===

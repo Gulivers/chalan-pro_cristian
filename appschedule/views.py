@@ -28,6 +28,7 @@ from .models import (
     Event, EventDraft, EventNote, EventChatMessage, Crew, AbsenceReason,
     EventChatReadStatus, EventImage
 )
+from ctrctsapp.models import Contract
 from crewsapp.models import Category, Job
 from .serializers import (
     EventSerializer, EventDraftSerializer, EventNoteSerializer, EventChatMessageSerializer, 
@@ -58,6 +59,16 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import logging
 
 logger = logging.getLogger("appschedule")
+
+class EventReadViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [DjangoModelPermissions]
+    queryset = Event.objects.all()
+    serializer_class = EventSerializer
+
+    @action(detail=True)
+    def contracts(self, request, pk=None):
+        contracts = Contract.objects.filter(schedule=pk).values_list('pk', flat=True)
+        return Response(contracts)
 
 class EventViewSet(viewsets.ModelViewSet):
     """ Event ViewSet """

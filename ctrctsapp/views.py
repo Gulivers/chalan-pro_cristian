@@ -535,6 +535,24 @@ class BuilderViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['is_active']
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        params = self.request.query_params
+        name = params.get('name')
+        rfc = params.get('rfc')
+        exclude_id = params.get('exclude_id')
+
+        if name:
+            qs = qs.filter(name__iexact=name.strip())
+        if rfc:
+            qs = qs.filter(rfc=rfc.strip())
+        if exclude_id:
+            try:
+                qs = qs.exclude(pk=int(exclude_id))
+            except (TypeError, ValueError):
+                pass
+        return qs
+
     @action(detail=True, methods=["get"])
     def workprices(self, request, pk=None):
         """Get Work Prices assigned to a specific Builder"""
@@ -577,6 +595,18 @@ class HouseModelViewSet(viewsets.ModelViewSet):
     serializer_class = HouseModelSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    
+    def get_serializer_context(self):
+        """
+        Add builder_id to serializer context for validation
+        """
+        context = super().get_serializer_context()
+        builder_id = self.request.data.get('builder_id')
+        print(f"DEBUG VIEWSET: builder_id from request.data = {builder_id}")
+        if builder_id:
+            context['builder_id'] = builder_id
+        print(f"DEBUG VIEWSET: context = {context}")
+        return context
 
     @action(detail=False, methods=['get'])
     def house_models_by_job(self, request):

@@ -5,11 +5,12 @@ from .views import (
     EventChatViewSet, download_schedule_pdf, MyEventsView, 
     export_schedule_excel, AbsenceReasonViewSet, WeeklySupervisorStatsChartView,
     WeeklySupervisorStatsExcelView, unread_chat_counts, mark_chat_read,
-    EventImageViewSet
+    EventImageViewSet, EventReadViewSet
 )
 
 router = DefaultRouter()
 router.register(r'schedule', EventViewSet)
+router.register(r'event', EventReadViewSet)
 router.register(r'absence-reasons', AbsenceReasonViewSet)
 router.register(r'event-images', EventImageViewSet, basename='eventimage')
 

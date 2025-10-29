@@ -130,8 +130,18 @@ class WorkAccount(models.Model):
         constraints = [
             # Unicidad de title (CI) entre activos
             UniqueConstraint(Lower('title'), condition=Q(is_active=True), name='uniq_workaccount_title_ci_active'),
-            # Evitar duplicar combinación (builder + job + lot) entre activos (lot CI)
-            UniqueConstraint('builder', 'job', Lower('lot'), condition=Q(is_active=True), name='uniq_workaccount_builder_job_lot_ci_active'),
+            # Unicidad por lot cuando lot no es vacío
+            UniqueConstraint(
+                'builder', 'job', Lower('lot'),
+                condition=Q(is_active=True) & ~Q(lot=""),
+                name='uniq_workaccount_builder_job_lot_ci_active'
+            ),
+            # Si no hay lot, usar address para la unicidad (CI)
+            UniqueConstraint(
+                'builder', 'job', Lower('address'),
+                condition=Q(is_active=True) & Q(lot="") & ~Q(address=""),
+                name='uniq_workaccount_builder_job_address_ci_active_when_no_lot'
+            ),
         ]
         indexes = [
             models.Index(Lower('title'), name='idx_workaccount_title_ci'),

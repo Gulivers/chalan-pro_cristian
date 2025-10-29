@@ -88,7 +88,7 @@
 </template>
 
 <script setup>
-  import { ref, watch, computed, defineProps, defineEmits } from 'vue';
+  import { ref, watch, computed, defineProps, defineEmits, nextTick } from 'vue';
   import VSelect from 'vue-select';
   import AddBuilderButton from '@/components/buttons/AddBuilderButton.vue';
   import EditBuilderButton from '@/components/buttons/EditBuilderButton.vue';
@@ -175,23 +175,60 @@ async function getHouses() {
   }
 
   function reloadBuilders({ builder, list }) {
-    builders.value = list;
-    if (builder?.id) builderValue.value = builder.id;
+    // Si recibimos una lista válida úsala, de lo contrario recarga desde el backend
+    if (Array.isArray(list) && list.length > 0) {
+      builders.value = list;
+    } else {
+      // Fallback robusto: volver a consultar para asegurar que el v-select tenga la opción
+      getBuilders();
+    }
+
+    if (builder?.id) {
+      builderValue.value = builder.id;
+      // Asegurar que el componente resuelva la etiqueta y no muestre el ID crudo
+      nextTick(() => {
+        const exists = (builders.value || []).some(b => b.id === builder.id);
+        if (!exists) getBuilders();
+      });
+    }
   }
 
   function onBuilderUpdated({ builder, list }) {
-    builders.value = list;
-    if (builder?.id) builderValue.value = builder.id;
+    if (Array.isArray(list) && list.length > 0) {
+      builders.value = list;
+    } else {
+      getBuilders();
+    }
+
+    if (builder?.id) {
+      builderValue.value = builder.id;
+      nextTick(() => {
+        const exists = (builders.value || []).some(b => b.id === builder.id);
+        if (!exists) getBuilders();
+      });
+    }
   }
 
   function reloadJobs({ job, list }) {
-    jobs.value = list;
+    jobs.value = Array.isArray(list) ? list : [];
     if (job?.id) jobValue.value = job.id;
   }
 
   function reloadHouseModels({ houseModel, list }) {
-    houses.value = list;
-    if (houseModel?.id) houseModelValue.value = houseModel.id;
+    // Si no llega lista (o viene vacía), recargar desde API para que aparezca inmediatamente
+    if (Array.isArray(list) && list.length > 0) {
+      houses.value = list;
+    } else {
+      getHouses();
+    }
+
+    if (houseModel?.id) {
+      houseModelValue.value = houseModel.id;
+      nextTick(() => {
+        const exists = (houses.value || []).some(h => h.id === houseModel.id);
+        if (!exists) getHouses();
+      });
+    }
   }
 
   const filteredJobs = computed(() =>
@@ -203,9 +240,9 @@ async function getHouses() {
     jobValue.value ? houses.value.filter(h => h.jobs && h.jobs.includes(jobValue.value)) : []
   );
 
-  const selectedBuilder = computed(() => builders.value.find(b => b.id === builderValue.value));
-  const selectedJob = computed(() => jobs.value.find(j => j.id === jobValue.value));
-  const selectedHouseModel = computed(() => houses.value.find(h => h.id === houseModelValue.value));
+  const selectedBuilder = computed(() => (builders.value || []).find(b => b.id === builderValue.value));
+  const selectedJob = computed(() => (jobs.value || []).find(j => j.id === jobValue.value));
+  const selectedHouseModel = computed(() => (houses.value || []).find(h => h.id === houseModelValue.value));
 
   function focusNext(event, nextField) {
     event.preventDefault();

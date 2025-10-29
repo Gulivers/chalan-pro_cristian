@@ -36,11 +36,6 @@ class Builder(models.Model):
         verbose_name_plural = 'Builders'
         ordering = ['name']
         constraints = [
-            # Evitar duplicar nombre de builder por Party (case-insensitive). Ajusta si no quieres esta regla.
-            UniqueConstraint(
-                Lower('name'), 'party',
-                name='uniq_builder_name_party_ci'
-            ),
             # Evitar duplicar nombre de builder (case-insensitive)
             UniqueConstraint(
                 Lower('name'),
@@ -153,6 +148,7 @@ class Contract(models.Model):
     file = models.FileField(null=True, upload_to='contract', default=None, blank=True, verbose_name='File')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_contracts', verbose_name='Created By')
     needs_reprint = models.BooleanField(default=False)
+    schedule = models.ForeignKey('appschedule.Event', on_delete=models.SET_NULL, blank=True, null=True, verbose_name='Schedule')
 
     def save(self, *args, **kwargs):
         # Sincronizar campos legacy desde work_account si está presente

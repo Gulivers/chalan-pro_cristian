@@ -14,7 +14,7 @@
       :action="'add'"
       :builderId="props.builderId"
       @saved="handleSaved"
-      @refresh="handleRefresh"
+      @refresh="handleSaved"
       @close="closeModal" />
   </div>
 </template>
@@ -45,13 +45,22 @@
     document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
   }
 
-  function handleSaved() {
+  function handleSaved(saved) {
+    // Si backend devolvió el objeto guardado, seleccionamos por ID exacto
+    const savedId = saved?.id ? Number(saved.id) : null;
     axios
       .get('/api/house_model/')
       .then(response => {
-        const houseList = response.data;
-        const newest = houseList.reduce((a, b) => (a.id > b.id ? a : b));
-        emit('housemodel-added', { houseModel: newest, list: houseList });
+        const houseList = response.data || [];
+        let selected = null;
+        if (savedId != null) {
+          selected = houseList.find(h => Number(h.id) === savedId) || null;
+        }
+        // Fallback: si no se encontró por id, tomar el más reciente
+        if (!selected && houseList.length) {
+          selected = houseList.reduce((a, b) => (a.id > b.id ? a : b));
+        }
+        emit('housemodel-added', { houseModel: selected, list: houseList });
       })
       .catch(error => {
         console.error('Error fetching house models:', error);

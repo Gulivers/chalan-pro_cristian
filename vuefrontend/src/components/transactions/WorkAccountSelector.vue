@@ -1,11 +1,11 @@
 <template>
   <div>
-    <label class="form-label d-flex align-items-center gap-2">Work Account</label>
+    <label v-if="showLabel" class="form-label d-flex align-items-center gap-2">Work Account</label>
     <div class="d-flex align-items-center">
       <v-select
         :options="options"
-        :reduce="o => o.value"
-        label="label"
+        :reduce="o => o.id"
+        label="title"
         v-model="selectedValue"
         :filterable="true"
         :clearable="true"
@@ -59,9 +59,11 @@
           <div class="modal-body">
             <WorkAccountSelect 
               ref="workAccountForm" 
-              :key="`workaccount-${editId || 'new'}`"
-              :id="editId" 
-              @saved="handleSaved" />
+              :key="`workaccount-${editId || 'new'}-${formNonce}`"
+              :id="editId"
+              :redirect-on-success="false"
+              @saved="handleSaved"
+              @cancel="closeModal" />
           </div>
         </div>
       </div>
@@ -89,6 +91,10 @@
       type: Boolean,
       default: false,
     },
+    showLabel: {
+      type: Boolean,
+      default: true,
+    },
   });
 
   const emit = defineEmits(['update:modelValue', 'change']);
@@ -100,6 +106,7 @@
   const editId = ref(null);
   const workAccountForm = ref(null);
   const modal = ref(null);
+  const formNonce = ref(0); // cambia para forzar remount del formulario
 
   // Generate unique modal ID
   const modalId = computed(() => `workAccountModal_${Math.random().toString(36).substr(2, 9)}`);
@@ -147,10 +154,8 @@
     try {
       const { data } = await axios.get('/api/work-accounts/', { params: { search, page_size: 20, active_only: 1 } });
       const list = Array.isArray(data) ? data : data?.results || [];
-      options.value = list.map(wa => ({
-        value: wa.id,
-        label: wa.title,
-      }));
+      // Usar directamente los objetos del backend para que v-select muestre "title"
+      options.value = list.map(wa => ({ id: wa.id, title: wa.title }));
     } catch (error) {
       console.error('Error searching work accounts:', error);
       // Si hay error, mostrar mensaje pero no romper la funcionalidad
@@ -165,6 +170,8 @@
     console.log('🔍 DEBUG WorkAccountSelector: openModal called with mode:', mode, 'id:', id, 'Type:', typeof id);
     editMode.value = mode === 'edit';
     editId.value = id;
+    // Forzar que el formulario inicie limpio al abrir (nueva key)
+    formNonce.value++;
 
     // Use the same pattern as ProductForm
     const modalEl = modal.value;
@@ -180,15 +187,19 @@
       const bootstrapModal = bootstrap.Modal.getInstance(modalEl);
       bootstrapModal?.hide();
     }
+    // Limpiar estado para siguiente apertura
+    if (!editMode.value) {
+      editId.value = null;
+    }
   }
 
   function handleSaved(newWorkAccount) {
     // Add to options if not already present
-    const existingOption = options.value.find(opt => opt.value === newWorkAccount.id);
+    const existingOption = options.value.find(opt => opt.id === newWorkAccount.id);
     if (!existingOption) {
       options.value.push({
-        value: newWorkAccount.id,
-        label: newWorkAccount.display || newWorkAccount.title,
+        id: newWorkAccount.id,
+        title: newWorkAccount.title,
       });
     }
 
@@ -201,7 +212,7 @@
 
   async function ensureWorkAccountInOptions(workAccountId) {
     // Check if the work account is already in options
-    const existingOption = options.value.find(opt => opt.value === workAccountId);
+    const existingOption = options.value.find(opt => opt.id === workAccountId);
     if (existingOption) {
       return; // Already in options
     }
@@ -209,10 +220,7 @@
     try {
       // Fetch the work account details and add to options
       const { data } = await axios.get(`/api/work-accounts/${workAccountId}/`);
-      options.value.push({
-        value: data.id,
-        label: data.title,
-      });
+      options.value.push({ id: data.id, title: data.title });
     } catch (error) {
       // Si el work account no existe (404), limpiar el valor seleccionado silenciosamente
       if (error.response?.status === 404) {

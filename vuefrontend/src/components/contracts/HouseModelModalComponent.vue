@@ -60,14 +60,13 @@
               </div>
               <!-- Work Price Checkboxes -->
               <div class="row px-3 text-start">
-                <template v-for="opt in filteredGroupedJobs">
+                <div v-for="(opt, gIdx) in filteredGroupedJobs" :key="'grp-' + gIdx" class="mb-2">
                   <label class="form-label text-black">{{opt.label}}</label>
                   <div class="form-check form-switch col-xl-3 col-md-4 col-sm-6" v-for="item in opt.options" :key="item.id">
-                  <input class="form-check-input" type="checkbox" role="switch" :value="item.id"
-                         v-model="houseModel.jobs"/>
-                  <label class="form-check-label">{{ item.name }}</label>
+                    <input class="form-check-input" type="checkbox" role="switch" :value="item.id" v-model="houseModel.jobs"/>
+                    <label class="form-check-label">{{ item.name }}</label>
+                  </div>
                 </div>
-                </template>
 <!--
                 <div class="form-check form-switch col-xl-3 col-md-4 col-sm-6" v-for="item in jobs" :key="item.id">
                   <input class="form-check-input" type="checkbox" role="switch" :value="item.id"
@@ -232,15 +231,21 @@ export default {
           name: this.houseModel.name,
           // jobs: this.houseModel.jobs.map(job => job.id), // Transformar los Jobs a IDs
           jobs: this.houseModel.jobs,
+          builder_id: this.builderId, // Include builder_id for validation
         };
 
+        let saved;
         if (this.action === 'edit') {
-          await axios.put(`/api/house_model/${this.houseModelId}/`, houseModelToSend);
+          const { data } = await axios.put(`/api/house_model/${this.houseModelId}/`, houseModelToSend);
+          saved = data;
         } else {
-          await axios.post('/api/house_model/', houseModelToSend);
+          const { data } = await axios.post('/api/house_model/', houseModelToSend);
+          saved = data;
         }
 
-        this.$emit('refresh'); // Notificar al componente padre
+        // Notificar al padre con el objeto guardado (incluye id)
+        this.$emit('saved', saved);
+        this.$emit('refresh');
         this.closeModal();
       } catch (error) {
         console.error('Error saving House Model:', error);
@@ -255,13 +260,26 @@ export default {
       }
     },
 
-    showModal() {
-      console.log('Props:', this.$props)
-      if (this.action === 'edit' && this.$props.houseModelId) {
-        this.fetchHouseModelJobs();
+    async showModal() {
+      // Asegurar catálogos cargados antes de filtrar
+      if (!Array.isArray(this.builders) || this.builders.length === 0 || !Array.isArray(this.jobs) || this.jobs.length === 0) {
+        await this.fetchBuildersAndJobs();
       }
-      const builder_data = this.builders.find(item => item.id === this.builderId);
-      this.searchQuery = builder_data ? builder_data.name : '';
+
+      // Si estamos editando, precargar relaciones
+      if (this.action === 'edit' && this.$props.houseModelId) {
+        await this.fetchHouseModelJobs();
+      }
+
+      // Normalizar builderId a número y aplicar filtro por nombre del builder
+      const builderIdNum = this.builderId != null ? Number(this.builderId) : null;
+      if (builderIdNum) {
+        const builderData = (this.builders || []).find(item => Number(item.id) === builderIdNum);
+        this.searchQuery = builderData ? (builderData.name || '') : '';
+      } else {
+        this.searchQuery = '';
+      }
+
       if (this.modalInstance) {
         this.modalInstance.show();
       }

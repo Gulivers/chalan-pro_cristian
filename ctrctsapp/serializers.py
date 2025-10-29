@@ -2,6 +2,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from rest_framework import serializers, viewsets
 from .models import WorkPrice, Contract, ContractDetails, Builder, Job, HouseModel
+from appschedule.models import Event
+from apptransactions.models import WorkAccount
 from crewsapp.models import Crew
 from apptransactions.models import PartyType, PartyCategory
 from appinventory.models import PriceType
@@ -201,6 +203,52 @@ class HouseModelSerializer(serializers.ModelSerializer):
         model = HouseModel
         fields = ['id', 'name', 'jobs']
 
+    def validate_name(self, value):
+        """
+        Check that the name is unique within the same builder, allowing updates to the current instance.
+        The validation works through the relationship: HouseModel -> Jobs -> Builder
+        """
+        name = value
+        instance_pk = self.instance.pk if self.instance else None
+        
+        # Get the builder_id from the context (passed from the view)
+        builder_id = self.context.get('builder_id')
+        
+        # Debug: Print builder_id to see if it's being passed correctly
+        print(f"DEBUG: builder_id = {builder_id}")
+        print(f"DEBUG: context = {self.context}")
+        
+        # Filter HouseModels that have jobs belonging to the same builder
+        if builder_id:
+            qs = HouseModel.objects.filter(
+                name__iexact=name,
+                jobs__builder_id=builder_id
+            ).distinct()
+
+            if instance_pk:
+                # If we are updating an existing object, exclude it from the uniqueness check
+                qs = qs.exclude(pk=instance_pk)
+
+            if qs.exists():
+                # Get the builder name for a more descriptive error message
+                from .models import Builder
+                try:
+                    builder = Builder.objects.get(id=builder_id)
+                    builder_name = builder.name or "Unknown Builder"
+                except Builder.DoesNotExist:
+                    builder_name = "Unknown Builder"
+                
+                raise serializers.ValidationError(f"A House Model with this name already exists for builder {builder_name}. ⚠")
+        else:
+            # If no builder_id is provided, fall back to global uniqueness
+            qs = HouseModel.objects.filter(name__iexact=name)
+            if instance_pk:
+                qs = qs.exclude(pk=instance_pk)
+            if qs.exists():
+                raise serializers.ValidationError("A house with this name already exists. ⚠")
+        
+        return value
+
     def create(self, validated_data):
         # Extract jobs from validated data
         jobs = validated_data.pop('jobs', [])
@@ -267,6 +315,9 @@ class ContractSerializer(serializers.ModelSerializer):
     house_model_id = serializers.PrimaryKeyRelatedField(queryset=HouseModel.objects.all(), source='house_model', write_only=True)
     builder_id = serializers.PrimaryKeyRelatedField(queryset=Builder.objects.all(), source='builder', write_only=True)
     job_id = serializers.PrimaryKeyRelatedField(queryset=Job.objects.all(), source='job', write_only=True)
+    # Nuevos campos para enlazar Work Account y Schedule (Event)
+    work_account_id = serializers.PrimaryKeyRelatedField(queryset=WorkAccount.objects.all(), source='work_account', write_only=True, required=False, allow_null=True)
+    schedule_id = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all(), source='schedule', write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = Contract
@@ -274,6 +325,10 @@ class ContractSerializer(serializers.ModelSerializer):
             'id', 'created_by', 'date_created', 'last_updated', 'type', 'builder', 'builder_id',
             'job', 'job_id', 'house_model', 'house_model_id', 'lot', 'sqft', 'address', 'job_price', 'travel_price', 
             'total_options', 'total', 'comment', 'file', 'contract_details', 'needs_reprint', 'doc_type',
+            # FK ids de solo lectura para edición/visualización
+            'work_account', 'schedule',
+            # write-only para crear/actualizar
+            'work_account_id', 'schedule_id',
         ]
         read_only_fields = ['id', 'date_created', 'last_updated']
 
@@ -281,11 +336,31 @@ class ContractSerializer(serializers.ModelSerializer):
     # Crear una nueva instancia de Contract con datos validados
     def create(self, validated_data):
         contract_details_data = validated_data.pop('contract_details')
-        builder = validated_data.pop('builder')
-        job = validated_data.pop('job')
-        house_model = validated_data.pop('house_model')
 
-        validated_data['travel_price'] = builder.travel_price_amount  # Usa el travel_price_amount del builder
+        # Permite crear el contrato solo con work_account_id, completando campos legacy
+        work_account = validated_data.get('work_account')
+        builder = validated_data.pop('builder', None)
+        job = validated_data.pop('job', None)
+        house_model = validated_data.pop('house_model', None)
+
+        if work_account:
+            builder = builder or getattr(work_account, 'builder', None)
+            job = job or getattr(work_account, 'job', None)
+            house_model = house_model or getattr(work_account, 'house_model', None)
+
+        # Validaciones explícitas para evitar IntegrityError de DB
+        errors = {}
+        if not builder:
+            errors['builder_id'] = 'Required (or provide work_account_id with builder).'
+        if not job:
+            errors['job_id'] = 'Required (or provide work_account_id with job).'
+        if not house_model:
+            errors['house_model_id'] = 'Required (or provide work_account_id with house_model).'
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        # Travel price sincronizado con el builder
+        validated_data['travel_price'] = builder.travel_price_amount
 
         with transaction.atomic():
             # Create the contract with validated data

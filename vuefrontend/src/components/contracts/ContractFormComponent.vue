@@ -31,6 +31,11 @@
                       <strong class="d-block d-md-inline">Updated: {{ formatDate(newContract.last_updated) }}</strong>
                   </p>
               </div>
+              <div class="mt-3 text-primary-emphasis small" v-if="event">
+                <strong>Event:</strong> {{ event.title }}
+                <span class="mx-2">|</span>
+                <strong>Crew:</strong> {{ event.crew_title }}
+              </div>
           </div>
           <div class="card-body">
               <div v-if="loading" class="spinner-container my-5">
@@ -66,6 +71,7 @@
                                   <WorkAccountSelector
                                       v-model="newContract.work_account"
                                       @change="onWorkAccountChanged"
+                                      :show-label="false"
                                   />
                               </div>
                           </div>
@@ -474,6 +480,7 @@ export default {
           houseModelId: null,
           action: 'add',
           isBid: false, // Por defecto, el checkbox no está marcado, lo que significa "Contract"
+          event: null,
       };
   },
 
@@ -581,11 +588,17 @@ export default {
       // Obtener datos iniciales cuando el componente se monta
       this.loading = true; // Show loading state while fetching data
       this.updateTravelPrice();
+
+      // Prefill desde un Event (Schedule) si viene event_id en query
+      const prefill = this.prefillFromEvent();
+
       Promise.all([
+          prefill,
           this.fetchContractToUpdate(),
           this.fetchBuilders(),
           this.fetchJobs(),
-          this.fetchHouseModels()
+          this.fetchHouseModels(),
+          this.loadEventFromContract(),
       ]).then(() => {
           this.loading = false; // Solo si todo carga bien, mostramos el formulario
       }).catch(error => {
@@ -599,6 +612,59 @@ export default {
       toggleDocType() {
           // Si el checkbox está marcado, se asigna "Bid", de lo contrario "Contract"
           this.newContract.doc_type = this.isBid ? 'Bid' : 'Contract';
+      },
+
+      async prefillFromEvent() {
+          try {
+              const eventId = this.$route.query.event_id
+              if (!eventId) return
+
+              // Leer el evento para obtener work_account, address y lot
+              const { data } = await axios.get(`/api/event/${eventId}/`)
+              // Guardar objeto del evento para mostrar en encabezado
+              this.event = data
+              // Guardar schedule para asociar el contrato al evento
+              this.newContract.schedule_id = data.id
+
+              // Si existe una Work Account, úsala para sincronizar el formulario
+              if (data.work_account) {
+                  this.newContract.work_account = data.work_account
+                  // Esto autocargará builder, job, house_model, lot y address
+                  const wa = await this.onWorkAccountChanged(data.work_account)
+                  // Asegurar que house_model, lot y address queden prellenados
+                  if (wa) {
+                      if (wa.house_model) this.newContract.house_model = wa.house_model
+                      if (wa.lot) this.newContract.lot = wa.lot
+                      if (wa.address) this.newContract.address = wa.address
+                  }
+              } else {
+                  // Fallback usando datos legacy del evento
+                  this.newContract.builder = data.builder || null
+                  this.newContract.job = data.job || null
+                  this.newContract.house_model = data.house_model || null
+              }
+
+              // Prellenar address/lot si vienen del evento
+              if (data.lot) this.newContract.lot = data.lot
+              if (data.address) this.newContract.address = data.address
+          } catch (e) {
+              console.error('Error pre-filling contract from event:', e)
+          }
+      },
+
+      async loadEventFromContract() {
+          try {
+              // Si estamos en modo edición o vista, cargar el evento (schedule) asociado al contrato
+              const id = this.$route.params.id
+              if (!id) return
+              const { data: contract } = await axios.get(`/api/contract/${id}/`)
+              const scheduleId = contract?.schedule
+              if (!scheduleId) return
+              const { data: event } = await axios.get(`/api/event/${scheduleId}/`)
+              this.event = event
+          } catch (e) {
+              console.error('Error loading event from contract:', e)
+          }
       },
 
       // Select all text in the input field
@@ -650,6 +716,7 @@ export default {
               if (data.builder) {
                   await this.fetchWorkPrices(data.builder)
               }
+              return data
           } catch (e) {
               console.error('Error syncing WorkAccount into contract:', e)
           }
@@ -1237,6 +1304,13 @@ export default {
           this.newContract.builder_id = this.newContract.builder;
           this.newContract.house_model_id = this.newContract.house_model;
           this.newContract.job_id = this.newContract.job;
+          // Asociaciones nuevas
+          if (this.newContract.work_account) {
+              this.newContract.work_account_id = this.newContract.work_account
+          }
+          if (this.$route.query.event_id) {
+              this.newContract.schedule_id = parseInt(this.$route.query.event_id)
+          }
           // console.log("this.newContract=> ", this.newContract)
 
           if (!this.validateContractFields()) {

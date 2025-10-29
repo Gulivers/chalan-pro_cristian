@@ -25,6 +25,17 @@
             aria-selected="false">
             📁 Folder
           </button>
+          <button
+            class="nav-link"
+            id="nav-contract-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#nav-contract"
+            type="button"
+            role="tab"
+            aria-controls="nav-contract"
+            aria-selected="false">
+            📜 Contracts
+          </button>
         </div>
       </nav>
     </div>
@@ -56,6 +67,14 @@
       <div class="tab-pane fade" id="nav-folder" role="tabpanel" aria-labelledby="nav-folder-tab" tabindex="0">
         <EventImageAdmin :eventId="eventId" />
       </div>
+      <div class="tab-pane fade" id="nav-contract" role="tabpanel" aria-labelledby="nav-contract-tab" tabindex="2">
+        <button class="btn btn-primary btn-sm mb-3" @click="goToContractForm">Add contract</button>
+        <ul>
+          <li v-for="item in contracts" :key="item">
+            <a :href="`contract-view/view/${item}`" target="_blank">Contract {{ item }}</a>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -78,6 +97,7 @@
         wsUrl: null,
         showEditor: null,
         lastSavedHTML: '',
+        contracts: [],
       };
     },
     mounted() {
@@ -93,6 +113,7 @@
       this.wsUrl = `${process.env.VUE_APP_WS_BASE_URL}ws/schedule/event/${this.$props.eventId}/`;
       this.connectWebSocket();
       this.getNote();
+      this.getContracts();
 
       if (!this.showEditor) {
         this.quill.root.dataset.placeholder = '';
@@ -104,6 +125,33 @@
     },
 
     methods: {
+      goToContractForm() {
+        // Cierra el modal (si existe) y navega luego de un tick para evitar backdrop
+        try {
+          const modalEl = document.querySelector('.modal.show');
+          if (modalEl) {
+            // Usa la instancia de Bootstrap si está disponible
+            const inst = window.bootstrap?.Modal?.getInstance?.(modalEl);
+            inst?.hide?.();
+          }
+          // Limpiar clases/elementos residuales de Bootstrap
+          document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+          document.body.classList.remove('modal-open');
+          document.body.style.removeProperty('padding-right');
+        } catch (e) {
+          // no-op
+        }
+        // Navegación dura para asegurar que no quede el overlay
+        this.$nextTick(() => {
+          try {
+            const resolved = this.$router.resolve({ name: 'contract-form', query: { event_id: this.$props.eventId } });
+            const href = resolved?.href || `/contract-form?event_id=${this.$props.eventId}`;
+            window.location.href = href;
+          } catch (_) {
+            window.location.href = `/contract-form?event_id=${this.$props.eventId}`;
+          }
+        });
+      },
       // Insertar emojis en el cursor actual
       insertEmoji(emoji) {
         const sel = this.quill.getSelection();
@@ -221,6 +269,12 @@
               this.userName = user.username;
             }
           });
+        }
+      },
+      async getContracts() {
+        const resp = await axios.get(`/api/event/${this.$props.eventId}/contracts/`);
+        if (resp.status === 200) {
+          this.contracts = resp.data;
         }
       },
     },
