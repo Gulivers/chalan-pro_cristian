@@ -45,7 +45,7 @@ import TooltipDirective from '@/directives/tooltip'
 axios.defaults.withCredentials = true;
 // La URL base de la API
 // axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000/';
-axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://192.168.0.248:8000';
+axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'https://chalan-pro.onrender.com';
 setupAxiosInterceptors();
 
 // Crea la aplicación de Vue
