@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-zf^1c+5%cj8m5k
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Parse ALLOWED_HOSTS from environment variable or use defaults
-allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '192.168.0.248,localhost,127.0.0.1')
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'chalan-pro-cristian.onrender.com,chalan-pro-cristian.onrender.com,localhost,127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
 
 MEDIA_URL = '/media/'
