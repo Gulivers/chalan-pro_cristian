@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16
-    container_name: chalan-postgres
+    container_name: chalan_postgres
     env_file:
       - .env
     environment:
@@ -43,7 +43,7 @@ services:
       DJANGO_SETTINGS_MODULE: project.settings
       SECRET_KEY: ${DJANGO_SECRET_KEY}
       DEBUG: ${DJANGO_DEBUG}
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chalan_postgres:5432/${POSTGRES_DB}
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
