@@ -25,8 +25,8 @@ services:
           property: connectionString
   - type: static
     name: chalan-frontend
-    rootDir: vuefrontend
-    buildCommand: npm ci && npm run build
-    publishPath: dist
+    rootDir: .
+    buildCommand: cd vuefrontend && npm ci && npm run build
+    publishPath: vuefrontend/dist
     env: node
     autoDeploy: true
