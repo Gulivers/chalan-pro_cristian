@@ -28,4 +28,5 @@ services:
     rootDir: vuefrontend
     buildCommand: npm ci && npm run build
     publishPath: dist
+    env: node
     autoDeploy: true
