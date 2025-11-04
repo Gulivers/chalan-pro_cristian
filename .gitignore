@@ -53,8 +53,8 @@ appcontacts/migrations/*
 appinventory/migrations/*
 !appinventory/migrations/__init__.py
 
-# Ignore settings.py
-project/settings.py
+# Ignore settings.py (commented out - needed for Render deployment)
+# project/settings.py
 
 # Ignore main.js
 vuefrontend/src/main.js
