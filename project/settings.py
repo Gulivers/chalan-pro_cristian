@@ -282,7 +282,7 @@ EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.sendgrid.net')
 EMAIL_PORT = os.environ.get('EMAIL_PORT', 587)  # Usa 465 si prefieres conexión SSL, en cuyo caso ajusta EMAIL_USE_SSL en True y elimina EMAIL_USE_TLS
 EMAIL_USE_TLS = True  # Si usas el puerto 587
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'apikey')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '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')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_DEFAULT_FROM', 'oliver@division16llc.com')
 
 FRONT_URL = os.environ.get('FRONT_URL', 'http://192.168.0.248:8080')
