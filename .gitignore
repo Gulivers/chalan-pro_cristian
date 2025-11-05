@@ -56,7 +56,16 @@ appinventory/migrations/*
 # Ignore settings.py (commented out - needed for Render deployment)
 # project/settings.py
 
-# Ignore main.js
-vuefrontend/src/main.js
+# Ignore main.js (commented out - needed for Render deployment)
+# vuefrontend/src/main.js
 vuefrontend/.env.local
 vuefrontend/.env
+vuefrontend/.env.development.local
+vuefrontend/.env.production.local
+
+# Scripts locales de desarrollo (no subir a GitHub)
+fix-postgres-password.ps1
+get-postgres-connection-info.ps1
+test-postgres-connection.ps1
+docker-postgres-setup.ps1
+docker-postgres-manage.ps1
