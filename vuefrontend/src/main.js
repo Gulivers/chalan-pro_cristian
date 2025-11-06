@@ -8,6 +8,12 @@ import router from './router';
 import { createPinia } from 'pinia';  // OAHP
 import store from './store';
 
+// jQuery y DataTables (deben estar antes de Bootstrap)
+import $ from 'jquery';
+import 'datatables.net'; // Solo JS, el CSS lo carga el CDN en index.html
+// Hacer jQuery disponible globalmente
+window.$ = window.jQuery = $;
+
 // Bootstrap (no es plugin de Vue)
 // Bootstrap CSS primero
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -45,7 +51,9 @@ import TooltipDirective from '@/directives/tooltip'
 axios.defaults.withCredentials = true;
 // La URL base de la API
 // axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000/';
-axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'https://chalan-backend.onrender.com';
+// http://192.168.0.248:8000
+axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://192.168.0.248:8000';
+//axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'https://chalan-backend.onrender.com';
 setupAxiosInterceptors();
 
 // Crea la aplicación de Vue
