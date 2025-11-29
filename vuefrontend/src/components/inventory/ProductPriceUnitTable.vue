@@ -277,6 +277,7 @@
 </script>
 
 <style scoped>
+/*
   .price-unit-settings-section {
     padding: 20px 0;
     min-height: 500px;
@@ -308,4 +309,5 @@
   .btn-outline-primary {
     margin-top: 15px;
   }
+    */
 </style>

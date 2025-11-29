@@ -37,14 +37,24 @@ module.exports = defineConfig({
   devServer: {
     host: '0.0.0.0',
     port: 3000,
-    allowedHosts: ['.192.168.0.248:3000'],
+    allowedHosts: ['all'],
     proxy: {
       '/api': {
-        target: 'http://192.168.0.248:3000',
+        // Usar localhost:8000 cuando el frontend corre fuera de Docker
+        // El puerto 8000 está mapeado desde el contenedor chalan-backend
+        target: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
+        ws: true,
+        logLevel: 'debug',
+        // Configuración para evitar problemas de conexión
+        timeout: 300000, // 5 minutos timeout
         // pathRewrite: { '^/api': '' },
       },
     },
+    // Configuración para evitar problemas de conexión
+    client: {
+      webSocketURL: 'auto://0.0.0.0:0/ws'
+    }
   },
 });

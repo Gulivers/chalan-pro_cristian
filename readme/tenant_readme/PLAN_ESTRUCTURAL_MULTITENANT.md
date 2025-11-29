@@ -619,7 +619,7 @@ echo "Backup creado: ./backups/${TENANT_SCHEMA}/${TENANT_SCHEMA}_${BACKUP_DATE}.
 ## 🚀 **Plan de Migración Multi-tenant**
 
 ### **Fase 1: Preparación**
-- [ ] Migrar de MySQL a PostgreSQL
+- [X] Migrar de MySQL a PostgreSQL
 - [ ] Implementar django-tenant-schemas
 - [ ] Configurar esquemas base
 

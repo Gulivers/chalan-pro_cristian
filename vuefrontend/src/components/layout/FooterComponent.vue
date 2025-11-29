@@ -1,5 +1,5 @@
 <template>
-  <footer class="text-bg-light py-3">
+  <footer class="chp-footer py-4 mt-4">
     <div class="container text-center">
       <div class="row">
         <!-- Left: Company Info -->
@@ -49,6 +49,7 @@ export default {
 </script>
 
 <style scoped>
+/*
 .footer-link {
   color: orange;
   text-decoration: none;
@@ -58,4 +59,5 @@ export default {
 .footer-link:hover {
   text-decoration: underline;
 }
+  */
 </style>

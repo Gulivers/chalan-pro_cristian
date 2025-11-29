@@ -4,9 +4,12 @@
   <h1 id="site-name">
     <a href="{% url 'admin:index' %}">Chalan Admin</a>
   </h1>
+  {% comment %} Solo mostrar el enlace al dashboard si estamos en un tenant (no en schema public) {% endcomment %}
+  {% if request.tenant and request.tenant.schema_name != 'public' %}
   <div style="margin-top: 10px;">
-    <a href="{% url 'inventory-dashboard' %}" class="button default" style="margin-top:5px;">
-        📊 Go to Dashboard
-      </a>
+    <a href="/dashboard/" class="button default" style="margin-top:5px;">
+      📊 Go to Dashboard
+    </a>
   </div>
+  {% endif %}
 {% endblock %}
