@@ -17,10 +17,13 @@ window.$ = window.jQuery = $;
 // Bootstrap (no es plugin de Vue)
 // Bootstrap CSS primero
 import 'bootstrap/dist/css/bootstrap.min.css';
+// Chalan-Pro Ocean Theme (debe ir después de Bootstrap para sobrescribir variables)
+// import '@/assets/scss/chalanpro-theme.scss';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
 import 'vue-select/dist/vue-select.css';
 import 'leaflet/dist/leaflet.css';
 import '@/assets/scss/custom-bootstrap.scss'; // custom scss npm install sass sass-loader --save-dev
+// onboarding.scss is imported directly in OnboardingView.vue to avoid affecting global styles
 
 // Bootstrap JS (bundle = incluye Popper). Importa SOLO uno
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // OAHP
@@ -109,9 +112,31 @@ window.__API_BASE_URL = API_BASE_URL;
 window.__WS_BASE_URL = WS_BASE_URL;
 window.__BUILD_WS_URL = (path = '') => joinUrl(WS_BASE_URL, path); // Helper global simple.
 
+// Exponer utilidades de tenant globalmente
+import { getTenantSubdomain, getTenantInfo, isPublicDomain } from './utils/tenantUtils';
+window.__getTenantSubdomain = getTenantSubdomain;
+window.__getTenantInfo = getTenantInfo;
+window.__isPublicDomain = isPublicDomain;
+
 // Permite que las cookies se envíen con cada solicitud
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = API_BASE_URL;
+
+// En desarrollo local, usar URL vacía para que pase por el proxy de Vue
+// En producción, usar la URL completa
+const { protocol, hostname, port } = window.location;
+const devPorts = new Set(['3000', '3001', '8080', '8081', '5173', '5174']);
+const isDevPort = Boolean(port) && devPorts.has(port);
+const isLocalDev = isLocalLikeHost(hostname) && isDevPort;
+
+// Si estamos en desarrollo local, no establecer baseURL para que use el proxy
+// Si estamos en producción, usar la URL completa
+if (!isLocalDev) {
+  axios.defaults.baseURL = API_BASE_URL;
+} else {
+  // En desarrollo, usar URL vacía para que las peticiones pasen por el proxy
+  axios.defaults.baseURL = '';
+}
+
 setupAxiosInterceptors();
 
 // Crea la aplicación de Vue

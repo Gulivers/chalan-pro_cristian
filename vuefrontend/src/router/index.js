@@ -7,6 +7,7 @@ import axios from 'axios';
 // ───────────────────────────────────────────────────────────
 
 const LoginView = () => import('@views/LoginView.vue');
+const OnboardingView = () => import('@views/OnboardingView.vue');
 const HomeView = () => import('@views/HomeView.vue');
 const AboutView = () => import('@views/AboutView.vue');
 const JobMap = () => import('@components/houses/JobMap.vue');
@@ -72,6 +73,12 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginView,
+    meta: { hideNavbar: true },
+  },
+  {
+    path: '/onboarding',
+    name: 'onboarding',
+    component: OnboardingView,
     meta: { hideNavbar: true },
   },
   {
