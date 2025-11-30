@@ -7,9 +7,9 @@ services:
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
+      chmod +x render_migrate_fix.sh || echo "chmod failed, continuing..."
     startCommand: |
-      python manage.py migrate appinventory 0002 --fake || echo "Migration 0002 fake failed, continuing..."
-      python manage.py migrate_schemas --shared || echo "Migration schemas failed, continuing..."
+      bash render_migrate_fix.sh || echo "Migration script failed, continuing..."
       python manage.py collectstatic --noinput || echo "Collectstatic failed, continuing..."
       daphne -b 0.0.0.0 -p $PORT project.asgi:application
     autoDeploy: true
