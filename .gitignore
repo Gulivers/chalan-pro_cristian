@@ -35,23 +35,23 @@ __pycache__/
 
 *.swp
 # Ignore the migrations folder (if you don't want to commit migrations)
-ctrctsapp/migrations/*
-!ctrctsapp/migrations/__init__.py
-crewsapp/migrations/*
-!crewsapp/migrations/__init__.py
-auditapp/migrations/*
-!auditapp/migrations/__init__.py
-appschedule/migrations/*
-!appschedule/migrations/__init__.py
-
-apptransactions/migrations/*
-!apptransactions/migrations/__init__.py
-
-appcontacts/migrations/*
-!appcontacts/migrations/__init__.py
-
-appinventory/migrations/*
-!appinventory/migrations/__init__.py
+# ctrctsapp/migrations/*
+# !ctrctsapp/migrations/__init__.py
+# crewsapp/migrations/*
+# !crewsapp/migrations/__init__.py
+# auditapp/migrations/*
+# !auditapp/migrations/__init__.py
+# appschedule/migrations/*
+# !appschedule/migrations/__init__.py
+# 
+# apptransactions/migrations/*
+# !apptransactions/migrations/__init__.py
+# 
+# appcontacts/migrations/*
+# !appcontacts/migrations/__init__.py
+# 
+# appinventory/migrations/*
+# !appinventory/migrations/__init__.py
 
 # Ignore settings.py (commented out - needed for Render deployment)
 # project/settings.py
