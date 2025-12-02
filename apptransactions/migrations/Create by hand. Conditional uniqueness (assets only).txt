@@ -1,0 +1,114 @@
+# Unicidad condicional (solo activos): Usa columnas generadas
+#   Con condición is_active: Solo registros activos deben ser únicos
+#   Necesitas columnas generadas: CASE WHEN is_active THEN ... ELSE NULL END
+
+-- WorkAccount: title único solo cuando activo
+ALTER TABLE apptransactions_workaccount
+ADD COLUMN title_ci_active VARCHAR(200) 
+GENERATED ALWAYS AS (CASE WHEN is_active = 1 THEN LOWER(title) ELSE NULL END) STORED,
+ADD UNIQUE INDEX uq_workaccount_title_ci_active (title_ci_active);
+
+-- WorkAccount: combinación única solo cuando activo
+ALTER TABLE apptransactions_workaccount
+ADD COLUMN lot_ci_active VARCHAR(100) 
+GENERATED ALWAYS AS (CASE WHEN is_active = 1 THEN LOWER(lot) ELSE NULL END) STORED,
+ADD UNIQUE INDEX uq_workaccount_builder_job_lot_ci_active (builder_id, job_id, lot_ci_active);
+
+-- TransactionFavorite: nombre único por usuario solo cuando activo
+ALTER TABLE apptransactions_transactionfavorite
+ADD COLUMN name_ci_active VARCHAR(200) 
+GENERATED ALWAYS AS (CASE WHEN is_active = 1 THEN LOWER(name) ELSE NULL END) STORED,
+ADD UNIQUE INDEX uq_fav_name_user_active (created_by_id, name_ci_active);
+
+-- =========================
+-- EXTRA: Unicidad cuando no hay LOT -> usar ADDRESS
+-- MySQL no soporta constraints condicionales; resolvemos con columnas generadas
+-- Regla deseada (solo activos):
+--   - Si LOT no está vacío: (builder_id, job_id, lower(lot)) debe ser único
+--   - Si LOT está vacío y ADDRESS no vacío: (builder_id, job_id, lower(address)) debe ser único
+-- Pasos para AJUSTAR 'lot_ci_active' (añadir condición lot <> '') y crear address_ci_active_when_no_lot
+
+-- 1) Re-crear lot_ci_active para que solo aplique cuando LOT no es vacío
+ALTER TABLE apptransactions_workaccount
+DROP INDEX uq_workaccount_builder_job_lot_ci_active,
+DROP COLUMN lot_ci_active,
+ADD COLUMN lot_ci_active VARCHAR(100)
+  GENERATED ALWAYS AS (
+    CASE WHEN is_active = 1 AND COALESCE(lot, '') <> '' THEN LOWER(lot) ELSE NULL END
+  ) STORED,
+ADD UNIQUE INDEX uq_workaccount_builder_job_lot_ci_active (builder_id, job_id, lot_ci_active);
+
+-- 2) Crear columna generada para ADDRESS cuando LOT está vacío
+ALTER TABLE apptransactions_workaccount
+ADD COLUMN address_ci_active_when_no_lot VARCHAR(255)
+  GENERATED ALWAYS AS (
+    CASE WHEN is_active = 1 AND COALESCE(lot, '') = '' AND COALESCE(address, '') <> '' THEN LOWER(address) ELSE NULL END
+  ) STORED,
+ADD UNIQUE INDEX uq_workaccount_builder_job_address_ci_active_when_no_lot (builder_id, job_id, address_ci_active_when_no_lot);
+
+-- Nota: si ya existen duplicados que violen estas reglas, MySQL fallará al crear los índices.
+--       Limpia duplicados primero (por ejemplo, buscando filas activas con mismo builder/job y lot/address).
+
+-- =========================
+-- VERSIÓN POSTGRESQL
+-- =========================
+-- Unicidad condicional (solo activos): Usa columnas generadas
+--   Con condición is_active: Solo registros activos deben ser únicos
+--   PostgreSQL soporta columnas generadas de forma similar a MySQL
+
+-- WorkAccount: title único solo cuando activo
+ALTER TABLE apptransactions_workaccount
+ADD COLUMN IF NOT EXISTS title_ci_active VARCHAR(200) 
+GENERATED ALWAYS AS (CASE WHEN is_active = true THEN LOWER(title) ELSE NULL END) STORED;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_workaccount_title_ci_active ON apptransactions_workaccount (title_ci_active);
+
+-- WorkAccount: combinación única solo cuando activo
+ALTER TABLE apptransactions_workaccount
+ADD COLUMN IF NOT EXISTS lot_ci_active VARCHAR(100) 
+GENERATED ALWAYS AS (CASE WHEN is_active = true THEN LOWER(lot) ELSE NULL END) STORED;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_workaccount_builder_job_lot_ci_active ON apptransactions_workaccount (builder_id, job_id, lot_ci_active);
+
+-- TransactionFavorite: nombre único por usuario solo cuando activo
+ALTER TABLE apptransactions_transactionfavorite
+ADD COLUMN IF NOT EXISTS name_ci_active VARCHAR(200) 
+GENERATED ALWAYS AS (CASE WHEN is_active = true THEN LOWER(name) ELSE NULL END) STORED;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_fav_name_user_active ON apptransactions_transactionfavorite (created_by_id, name_ci_active);
+
+-- =========================
+-- EXTRA: Unicidad cuando no hay LOT -> usar ADDRESS
+-- PostgreSQL soporta constraints condicionales y columnas generadas
+-- Regla deseada (solo activos):
+--   - Si LOT no está vacío: (builder_id, job_id, lower(lot)) debe ser único
+--   - Si LOT está vacío y ADDRESS no vacío: (builder_id, job_id, lower(address)) debe ser único
+
+-- 1) Re-crear lot_ci_active para que solo aplique cuando LOT no es vacío
+-- Primero eliminar el índice y columna existentes si existen
+DROP INDEX IF EXISTS uq_workaccount_builder_job_lot_ci_active;
+ALTER TABLE apptransactions_workaccount DROP COLUMN IF EXISTS lot_ci_active;
+
+ALTER TABLE apptransactions_workaccount
+ADD COLUMN lot_ci_active VARCHAR(100)
+  GENERATED ALWAYS AS (
+    CASE WHEN is_active = true AND COALESCE(lot, '') <> '' THEN LOWER(lot) ELSE NULL END
+  ) STORED;
+
+CREATE UNIQUE INDEX uq_workaccount_builder_job_lot_ci_active ON apptransactions_workaccount (builder_id, job_id, lot_ci_active);
+
+-- 2) Crear columna generada para ADDRESS cuando LOT está vacío
+ALTER TABLE apptransactions_workaccount
+ADD COLUMN IF NOT EXISTS address_ci_active_when_no_lot VARCHAR(255)
+  GENERATED ALWAYS AS (
+    CASE WHEN is_active = true AND COALESCE(lot, '') = '' AND COALESCE(address, '') <> '' THEN LOWER(address) ELSE NULL END
+  ) STORED;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_workaccount_builder_job_address_ci_active_when_no_lot ON apptransactions_workaccount (builder_id, job_id, address_ci_active_when_no_lot);
+
+-- Nota PostgreSQL: 
+-- - Usa 'true' en lugar de 1 para valores booleanos
+-- - IF NOT EXISTS y IF EXISTS están disponibles para evitar errores si ya existen
+-- - La sintaxis de columnas generadas es similar pero PostgreSQL es más estricto con tipos
+-- - Si ya existen duplicados que violen estas reglas, PostgreSQL fallará al crear los índices.
+--   Limpia duplicados primero ejecutando queries de verificación.
