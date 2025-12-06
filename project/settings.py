@@ -30,7 +30,10 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-zf^1c+5%cj8m5k
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Parse ALLOWED_HOSTS from environment variable or use defaults
-allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'chalan-pro-cristian.onrender.com,chalan-pro-cristian.onrender.com,localhost,127.0.0.1')
+allowed_hosts_env = os.environ.get(
+    'ALLOWED_HOSTS',
+    'chalan-frontend.onrender.com,chalan-backend.onrender.com,localhost,127.0.0.1,192.168.0.248,www.chalanpro.net,chalanpro.net,.chalan-pro.net,.onrender.com'
+)
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
 
 MEDIA_URL = '/media/'
@@ -86,8 +89,22 @@ MIDDLEWARE = [
 
 # Si usas sesiones de autenticación (en lugar de TokenAuthentication), habilita CSRF
 # CSRF Trusted Origins
-csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8080,http://192.168.0.248:8080,http://192.168.0.248:3000')
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_env.split(',')]
+# CSRF Trusted Origins - Incluir dominios de producción
+default_csrf_origins = 'http://localhost:8080,http://192.168.0.248:8080,http://192.168.0.248:3000,http://localhost:8000,http://192.168.0.248:8000,http://localhost:3000,https://www.chalanpro.net,https://chalanpro.net,https://chalan-backend.onrender.com,https://chalan-frontend.onrender.com'
+csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', default_csrf_origins)
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_env.split(',') if origin.strip()]
+
+# Agregar dominios de producción si no están en DEBUG
+if not DEBUG:
+    production_origins = [
+        'https://www.chalanpro.net',
+        'https://chalanpro.net',
+        'https://chalan-backend.onrender.com',
+        'https://chalan-frontend.onrender.com',
+    ]
+    for origin in production_origins:
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
 
 
 # Permitir todas las solicitudes desde el frontend
